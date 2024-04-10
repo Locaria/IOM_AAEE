@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keyword Generator</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+        body {
+            background: linear-gradient(to bottom, #9F70FD, #FFFFFF);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .content {
+            background: #9F70FD; /* Adiciona um fundo branco à div de conteúdo se necessário */
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Adiciona uma sombra suave */
+        }
+        /* Outros estilos que você possa ter... */
+    </style>
+</head>
+<body>
+    <div class="content">
+        <h1>Keyword Generator</h1>
+        <form method="post" action="/">
+            <label for="seed_keyword">Keyword seed:</label>
+            <input type="text" name="seed_keyword" required>
+            <label for="num_keywords">How many keywords do you need?:</label>
+            <input type="number" name="num_keywords" min="1" value="5" required>
+            <button type="submit">Generate keyword</button>
+        </form>
+
+        {% if keywords %}
+            <h2>Keywords:</h2>
+            <ul>
+                {% for keyword in keywords %}
+                    <li>{{ keyword }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+</body>
+</html>
+
+
