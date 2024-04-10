@@ -10,9 +10,9 @@ country_search = st.text_input("Country", "Enter a country code (e.g., PT, UK, E
 
 if st.button('Search'):
     scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
-    creds = ServiceAccountCredentials.from_json_keyfile_name('path/to/your/creds.json', scope)
+    creds = ServiceAccountCredentials.from_json_keyfile_name('C:/Users/yngrid.figlioli/Desktop/AAEE/IOM/plunetpulls-ca50ccd56cf0.json', scope)
     client = gspread.authorize(creds)
-    spreadsheet_id = 'your_spreadsheet_id'
+    spreadsheet_id = '1fkzvhb7al-GFajtjRRy3b93vCDdlARBmCTGDrxm0KVY'
     spreadsheet = client.open_by_key(spreadsheet_id)
     sheet = spreadsheet.sheet1
     lines = sheet.get_all_records()
