@@ -1,11 +1,10 @@
-import os
 import streamlit as st
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
 st.title('Search in Google Sheets')
 
-creds_path = os.getenv('C:/Users/yngrid.figlioli/Desktop/AAEE/IOM/plunetpulls-ca50ccd56cf0.json')
+creds_path = ('C:/Users/yngrid.figlioli/Desktop/AAEE/IOM/plunetpulls-ca50ccd56cf0.json')
 
 word_search = st.text_input("Keyword", "Type a keyword...")
 country_search = st.text_input("Country", "Enter a country code (e.g., PT, UK, ES, IT)...")
