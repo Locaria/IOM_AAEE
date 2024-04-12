@@ -1,10 +1,15 @@
+import os
 import streamlit as st
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
 st.title('Search in Google Sheets')
 
-creds_path = ('C:/Users/yngrid.figlioli/Desktop/AAEE/IOM/plunetpulls-ca50ccd56cf0.json')
+# Get the path to the credentials from the environment variable
+creds_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
+if creds_path is None:
+    st.error("Google credentials path not set. Please set the GOOGLE_APPLICATION_CREDENTIALS environment variable.")
+    st.stop()
 
 word_search = st.text_input("Keyword", "Type a keyword...")
 country_search = st.text_input("Country", "Enter a country code (e.g., PT, UK, ES, IT)...")
