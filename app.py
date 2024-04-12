@@ -1,16 +1,18 @@
+import os
 import streamlit as st
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
 st.title('Search in Google Sheets')
 
+creds_path = os.getenv('C:/Users/yngrid.figlioli/Desktop/AAEE/IOM/plunetpulls-ca50ccd56cf0.json')
+
 word_search = st.text_input("Keyword", "Type a keyword...")
 country_search = st.text_input("Country", "Enter a country code (e.g., PT, UK, ES, IT)...")
 
-
 if st.button('Search'):
     scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
-    creds = ServiceAccountCredentials.from_json_keyfile_name('C:/Users/yngrid.figlioli/Desktop/AAEE/IOM/plunetpulls-ca50ccd56cf0.json', scope)
+    creds = ServiceAccountCredentials.from_json_keyfile_name(creds_path, scope)
     client = gspread.authorize(creds)
     spreadsheet_id = '1fkzvhb7al-GFajtjRRy3b93vCDdlARBmCTGDrxm0KVY'
     spreadsheet = client.open_by_key(spreadsheet_id)
