@@ -8,8 +8,8 @@ st.title('Search in Google Sheets')
 # Get the path to the credentials from the environment variable
 creds_path = (r"C:/Users/yngrid.figlioli/Desktop/AAEE/IOM/plunetpulls-ca50ccd56cf0.json")
 
-word_search = st.text_input("Keyword", "Type a keyword...")
-country_search = st.text_input("Country", "Enter a country code (e.g., PT, UK, ES, IT)...")
+word_search = st.text_input("Keyword")
+country_search = st.text_input("Country")
 
 if st.button('Search'):
     scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
