@@ -26,7 +26,7 @@ country_language_mapping = {
 }
 
 def get_google_sheets_credentials():
-    creds_file_path = 'credentials.json'
+    creds_file_path = 'C:/Users/yngrid.figlioli/Desktop/AAEE/IOM/global-ace-417010-a45b5fe90edc.json'
     if not os.path.exists(creds_file_path):
         raise EnvironmentError("Google Sheets credentials file not found.")
     scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
@@ -44,7 +44,7 @@ def get_keyword_suggestions(keyword, language_code):
 
 def search_keywords(dataframe, country, creds):
     client = gspread.authorize(creds)
-    spreadsheet_id = 'YOUR_SPREADSHEET_ID'  # Replace with your actual spreadsheet ID
+    spreadsheet_id = '1fkzvhb7al-GFajtjRRy3b93vCDdlARBmCTGDrxm0KVY'
     spreadsheet = client.open_by_key(spreadsheet_id)
     sheet = spreadsheet.sheet1
     lines = sheet.get_all_records()
@@ -98,7 +98,7 @@ def main():
             if st.button("Confirm and Download"):
                 # Update Google Sheet with new suggestions
                 client = gspread.authorize(creds)
-                spreadsheet_id = 'YOUR_SPREADSHEET_ID'  # Replace with your actual spreadsheet ID
+                spreadsheet_id = '1fkzvhb7al-GFajtjRRy3b93vCDdlARBmCTGDrxm0KVY'
                 spreadsheet = client.open_by_key(spreadsheet_id)
                 sheet = spreadsheet.sheet1
 
@@ -115,4 +115,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-    
+
