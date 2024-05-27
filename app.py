@@ -3,8 +3,7 @@ import pandas as pd
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from pytrends.request import TrendReq
-from google.oauth2 import service_account
-import os
+import json
 
 # Mapping of provided country codes to their respective language codes
 country_language_mapping = {
@@ -27,8 +26,10 @@ country_language_mapping = {
 }
 
 def get_google_sheets_credentials():
+    google_credentials = st.secrets['google_credentials']['secret']
+    secret = json.loads(google_credentials)
     scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
-    credentials = ServiceAccountCredentials.from_json_keyfile_name(r'C:\Users\yngrid.figlioli\Desktop\AAEE\IOM\global-ace-417010-a45b5fe90edc.json', scope)  
+    credentials = ServiceAccountCredentials.from_json_keyfile_dict(secret, scope)
     return credentials
 
 def get_keyword_suggestions(keyword, language_code):
