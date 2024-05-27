@@ -1,3 +1,8 @@
 streamlit
 gspread
 oauth2client
+pandas
+gspread
+oauth2client
+pytrends
+openpyxl

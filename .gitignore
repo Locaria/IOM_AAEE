@@ -5,3 +5,5 @@
 /global-ace-417010-a45b5fe90edc.json
 /google-ads.yaml
 /global-ace-417010-a45b5fe90edc.json
+venv/*
+__pycache__/*
