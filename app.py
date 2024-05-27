@@ -3,6 +3,7 @@ import pandas as pd
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from pytrends.request import TrendReq
+from google.oauth2 import service_account
 import os
 
 # Mapping of provided country codes to their respective language codes
@@ -26,12 +27,9 @@ country_language_mapping = {
 }
 
 def get_google_sheets_credentials():
-    creds_file_path = 'C:/Users/yngrid.figlioli/Desktop/AAEE/IOM/global-ace-417010-a45b5fe90edc.json'
-    if not os.path.exists(creds_file_path):
-        raise EnvironmentError("Google Sheets credentials file not found.")
     scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
-    creds = ServiceAccountCredentials.from_json_keyfile_name(creds_file_path, scope)
-    return creds
+    credentials = ServiceAccountCredentials.from_json_keyfile_name(r'C:\Users\yngrid.figlioli\Desktop\AAEE\IOM\global-ace-417010-a45b5fe90edc.json', scope)  
+    return credentials
 
 def get_keyword_suggestions(keyword, language_code):
     pytrends = TrendReq(hl=language_code, tz=360)
