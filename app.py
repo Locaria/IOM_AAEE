@@ -4,11 +4,8 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
 from translate import Translator as Translate
-import nltk
-from nltk.corpus import wordnet # type: ignore
+import requests
 
-nltk.download('wordnet', quiet=True)
-nltk.download('punkt', quiet=True)
 # Mapping of provided country codes to their respective language codes
 country_language_mapping = {
     'CZ': 'cs',  # Czech Republic
@@ -41,12 +38,19 @@ def translate_text(text, target_language):
     translation = translator.translate(text)
     return translation
 
-def suggest_words(word):
-    suggestions = set()  #avoid dupplicated words
-    synsets = wordnet.synsets(word)
-    for synset in synsets:
-        for lemma in synset.lemmas():
-            suggestions.add(lemma.name())
+def suggest_words(word, language_code):
+    url = f"https://api.dictionaryapi.dev/api/v2/entries/{language_code}/{word}"
+    response = requests.get(url)
+    suggestions = set()  # Usar um set para evitar palavras duplicadas
+
+    if response.status_code == 200:
+        data = response.json()
+        if isinstance(data, list) and 'meanings' in data[0]:
+            for meaning in data[0]['meanings']:
+                if 'synonyms' in meaning:
+                    for synonym in meaning['synonyms']:
+                        suggestions.add(synonym)
+    
     return list(suggestions)
 
 def search_keywords(dataframe, country, creds):
@@ -75,7 +79,7 @@ def search_keywords(dataframe, country, creds):
         if not found:
             translated_keyword = translate_text(keyword, language_code)
             st.write(f"Translated '{keyword}' to '{translated_keyword}'")  # Debugging line
-            suggestions = suggest_words(translated_keyword)
+            suggestions = suggest_words(translated_keyword, language_code)
             st.write(f"Suggestions for '{translated_keyword}': {suggestions}")  # Debugging line
             found_keyword_column.append("Keyword not saved in the database yet")
             translation_column.append(translated_keyword)

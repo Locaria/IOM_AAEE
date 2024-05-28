@@ -12,3 +12,4 @@ scipy
 numpy
 spacy
 nltk
+requests
