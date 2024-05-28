@@ -8,6 +8,7 @@ from pytrends.request import TrendReq
 import json
 import time
 from pytrends.exceptions import TooManyRequestsError
+from openai.error import RateLimitError, OpenAIError # type: ignore
 
  #secrets.toml from Streamlit
 openai.api_key = os.getenv("OPENAI_API_KEY", st.secrets["openai"]["api_key"])
@@ -80,7 +81,7 @@ def get_chatgpt_suggestions(keyword, language_code):
             )
             suggestions = response.choices[0]["message"]["content"].strip().split("\n")
             return suggestions if suggestions else ["No suggestion available"]
-        except openai.error.RateLimitError as e:
+        except RateLimitError as e:
             attempts += 1
             if attempts < max_attempts:
                 st.warning(f"Rate limit exceeded. Retrying in {wait_time} seconds...")
@@ -89,7 +90,7 @@ def get_chatgpt_suggestions(keyword, language_code):
             else:
                 st.error(f"Rate limit exceeded: {e}")
                 return ["Rate limit exceeded. Please try again later."]
-        except openai.error.OpenAIError as e:
+        except OpenAIError as e:
             st.error(f"An error occurred: {e}")
             return ["An error occurred. Please try again later."]
 
