@@ -8,6 +8,8 @@ import nltk
 from nltk.corpus import wordnet
 import requests
 from bs4 import BeautifulSoup
+from tqdm import tqdm
+import asyncio
 
 # Baixar os dados necessários do NLTK de forma silenciosa
 nltk.download('wordnet', quiet=True)
@@ -118,10 +120,22 @@ def search_keywords(dataframe, country, creds):
 
     return dataframe
 
+async def fetch_url(url):
+    response = requests.get(url)
+    return response.content
+
 def extract_keywords_from_url(url, language_code):
     try:
-        response = requests.get(url)
-        soup = BeautifulSoup(response.content, 'html.parser')
+        st.write(f"Fetching content from URL: {url}")
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        html_content = loop.run_until_complete(fetch_url(url))
+        soup = BeautifulSoup(html_content, 'html.parser')
+        
+        # Remove scripts and styles
+        for script in soup(["script", "style"]):
+            script.decompose()
+        
         text = ' '.join(soup.stripped_strings)
         words = text.split()
         
@@ -130,8 +144,9 @@ def extract_keywords_from_url(url, language_code):
             stop_words = set(stopwords.words(language_code))
         else:
             stop_words = set(stopwords.words('english'))  # Usar inglês como padrão se o idioma não for encontrado
-
-        keywords = [word for word in words if word.lower() not in stop_words and word.isalpha()]
+        
+        st.write("Extracting keywords...")
+        keywords = [word for word in tqdm(words) if word.lower() not in stop_words and word.isalpha()]
         return keywords
     except Exception as e:
         st.write(f"Error extracting keywords from URL '{url}': {e}")

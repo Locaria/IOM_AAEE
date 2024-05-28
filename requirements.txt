@@ -15,3 +15,4 @@ nltk
 requests
 beautifulsoup4
 lxml
+tqdm
