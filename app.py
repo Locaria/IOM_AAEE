@@ -4,8 +4,12 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
 from translate import Translator as Translate
-import requests
-import sinonimos
+from textblob import TextBlob
+from nltk.corpus import wordnet
+import nltk
+
+nltk.download('wordnet')
+nltk.download('omw-1.4')
 
 # Mapping of provided country codes to their respective language codes
 country_language_mapping = {
@@ -39,16 +43,34 @@ def translate_text(text, target_language):
     translation = translator.translate(text)
     return translation
 
-def suggest_words(word):
-    try:
-        suggestions = sinonimos.get(word)
-        if suggestions:
-            return suggestions
-        else:
-            return []
-    except Exception as e:
-        st.write(f"Error fetching synonyms for {word}: {e}")
-        return []
+def suggest_words(word, language_code):
+    blob = TextBlob(word)
+    suggestions = set()
+
+    # Se a língua não for inglês, traduzir para inglês
+    if language_code != 'en':
+        word_en = str(blob.translate(to='en'))
+    else:
+        word_en = word
+
+    synsets = wordnet.synsets(word_en)
+    for synset in synsets:
+        for lemma in synset.lemmas():
+            suggestions.add(lemma.name())
+
+    # Traduzir de volta para o idioma original, se necessário
+    if language_code != 'en':
+        suggestions_translated = set()
+        for suggestion in suggestions:
+            suggestion_blob = TextBlob(suggestion)
+            try:
+                suggestion_translated = str(suggestion_blob.translate(to=language_code))
+                suggestions_translated.add(suggestion_translated)
+            except Exception as e:
+                st.write(f"Error translating suggestion '{suggestion}': {e}")
+        suggestions = suggestions_translated
+
+    return list(suggestions)
 
 def search_keywords(dataframe, country, creds):
     client = gspread.authorize(creds)
