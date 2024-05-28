@@ -4,7 +4,9 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
 from translate import Translator as Translate
-import requests
+from PyDictionary import PyDictionary
+
+dictionary = PyDictionary()
 
 # Mapping of provided country codes to their respective language codes
 country_language_mapping = {
@@ -38,20 +40,12 @@ def translate_text(text, target_language):
     translation = translator.translate(text)
     return translation
 
-def suggest_words(word, language_code):
-    url = f"https://api.dictionaryapi.dev/api/v2/entries/{language_code}/{word}"
-    response = requests.get(url)
-    suggestions = set()  # Usar um set para evitar palavras duplicadas
-
-    if response.status_code == 200:
-        data = response.json()
-        if isinstance(data, list) and 'meanings' in data[0]:
-            for meaning in data[0]['meanings']:
-                if 'synonyms' in meaning:
-                    for synonym in meaning['synonyms']:
-                        suggestions.add(synonym)
-    
-    return list(suggestions)
+def suggest_words(word):
+    suggestions = dictionary.synonym(word)
+    if suggestions:
+        return suggestions
+    else:
+        return []
 
 def search_keywords(dataframe, country, creds):
     client = gspread.authorize(creds)
