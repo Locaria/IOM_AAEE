@@ -4,6 +4,8 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from pytrends.request import TrendReq
 import json
+import time
+from pytrends.exceptions import TooManyRequestsError
 
 # Mapping of provided country codes to their respective language codes
 country_language_mapping = {
@@ -32,14 +34,27 @@ def get_google_sheets_credentials():
     credentials = ServiceAccountCredentials.from_json_keyfile_dict(secret, scope)
     return credentials
 
-def get_keyword_suggestions(keyword, language_code):
+def get_google_trends_suggestions(keyword, language_code, country_code):
     pytrends = TrendReq(hl=language_code, tz=360)
-    pytrends.build_payload([keyword], cat=0, timeframe='today 12-m', geo='', gprop='')
-    data = pytrends.related_queries()
-    if data[keyword]['top'] is not None:
-        return data[keyword]['top']['query'].tolist()
-    else:
-        return ["No suggestion available"]
+    attempts = 0
+    max_attempts = 5
+    wait_time = 2  # Initial wait time in seconds
+
+    while attempts < max_attempts:
+        try:
+            pytrends.build_payload([keyword], cat=0, timeframe='today 12-m', geo=country_code, gprop='')  # Use country_code
+            data = pytrends.related_queries()
+            if data[keyword]['top'] is not None:
+                return data[keyword]['top']['query'].tolist()
+            else:
+                return ["No suggestion available"]
+        except TooManyRequestsError:
+            attempts += 1
+            st.warning(f"Google Trends rate limit exceeded. Retrying in {wait_time} seconds...")
+            time.sleep(wait_time)
+            wait_time *= 2  # Exponential backoff
+
+    return ["Rate limit exceeded. Please try again later."]
 
 def search_keywords(dataframe, country, creds):
     client = gspread.authorize(creds)
@@ -51,7 +66,8 @@ def search_keywords(dataframe, country, creds):
     keyword_column = []
     suggestion_column = []
 
-    language_code = country_language_mapping.get(country, 'en-US')
+    language_code = country_language_mapping.get(country, 'en-US')  # Determine language_code
+    st.write(f"Using language code: {language_code}")  # Debugging line to check language code
 
     new_suggestions = []
 
@@ -64,7 +80,12 @@ def search_keywords(dataframe, country, creds):
                 found = True
                 break
         if not found:
-            suggestions = get_keyword_suggestions(keyword, language_code)
+            # First try Google Trends for suggestions
+            suggestions = get_google_trends_suggestions(keyword, language_code, country)
+            if "No suggestion available" in suggestions or "Rate limit exceeded" in suggestions:
+                # If no suggestions from Google Trends, try ChatGPT
+                suggestions = get_chatgpt_suggestions(keyword, language_code)
+            
             keyword_column.append("Keyword not saved in the database yet")
             suggestion_column.append(", ".join(suggestions))
             if "No suggestion available" not in suggestions:
@@ -72,8 +93,6 @@ def search_keywords(dataframe, country, creds):
 
     dataframe['Found Keyword'] = keyword_column
     dataframe['Suggested Keywords'] = suggestion_column
-
-    return dataframe, new_suggestions
 
 def main():
     st.title('Keyword Checker and Suggestion Tool')
