@@ -48,8 +48,8 @@ def search_keywords(dataframe, country, creds):
     sheet = spreadsheet.sheet1
     lines = sheet.get_all_records()
 
-    keyword_column = []
-    suggestion_column = []
+    found_keyword_column = []
+    translation_column = []
 
     language_code = country_language_mapping.get(country, 'en')  # Determine language_code
     st.write(f"Using language code: {language_code}")  # Debugging line to check language code
@@ -58,24 +58,24 @@ def search_keywords(dataframe, country, creds):
         found = False
         for line in lines:
             if line["Target Country"].upper() == country.upper() and keyword.lower() in line["Translation"].lower():
-                keyword_column.append(line["Keyword"])
-                suggestion_column.append("N/A")
+                found_keyword_column.append(line["Keyword"])
+                translation_column.append("N/A")
                 found = True
                 break
         if not found:
             translated_keyword = translate_text(keyword, language_code)
-            keyword_column.append(translated_keyword)
-            suggestion_column.append("No suggestion available")
+            found_keyword_column.append("Keyword not saved in the database yet")
+            translation_column.append(translated_keyword)
 
-    dataframe['Found Keyword'] = keyword_column
-    dataframe['Suggested Keywords'] = suggestion_column
+    dataframe['Found Keyword'] = found_keyword_column
+    dataframe['Translation'] = translation_column
 
     return dataframe
 
 def main():
-    st.title('Keyword Checker and Suggestion Tool')
+    st.title('Keyword Checker and Translation Tool')
 
-    st.write("Upload an Excel file, choose the country, and get keyword suggestions.")
+    st.write("Upload an Excel file, choose the country, and get keyword translations.")
 
     uploaded_file = st.file_uploader("Choose an Excel file", type=["xlsx", "xls"])
     if uploaded_file:
