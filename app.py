@@ -68,7 +68,7 @@ def search_keywords(dataframe, country, creds):
             translation_column.append(translated_keyword)
 
     dataframe['Found Keyword'] = found_keyword_column
-    dataframe['Translation'] = translation_column
+    dataframe['Suggestion'] = translation_column
 
     return dataframe
 
