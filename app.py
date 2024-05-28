@@ -3,10 +3,11 @@ import pandas as pd
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
-from translate import Translator
-import spacy
+from translate import Translator as Translate
+import nltk
+from nltk.corpus import wordnet # type: ignore
 
-
+nltk.download('wordnet')
 # Mapping of provided country codes to their respective language codes
 country_language_mapping = {
     'CZ': 'cs',  # Czech Republic
@@ -35,23 +36,21 @@ def get_google_sheets_credentials():
     return credentials
 
 def translate_text(text, target_language):
-    translator = Translator()
-    translation = translator.translate(text, dest=target_language)
-    return translation.text
+    translator = Translate(to_lang=target_language)
+    translation = translator.translate(text)
+    return translation
 
-def suggest_words(text, language_code):
-    # Processar o texto traduzido com spaCy
-    nlp = spacy.load(language_code)  
-    doc = nlp(text)
-
-    # Obter palavras semelhantes ou sinônimos
-    suggestions = [token.text for token in doc if token.is_alpha and not token.is_stop]
+def suggest_words(text):
+    suggestions = []
+    tokens = nltk.word_tokenize(text)
+    for token in tokens:
+        synsets = wordnet.synsets(token)
+        for synset in synsets:
+            for lemma in synset.lemmas():
+                suggestions.append(lemma.name())
     return suggestions
 
 def search_keywords(dataframe, country, creds):
-    language_code = country_language_mapping.get(country, 'en')
-    nlp = spacy.load(language_code)
-
     client = gspread.authorize(creds)
     spreadsheet_id = '1fkzvhb7al-GFajtjRRy3b93vCDdlARBmCTGDrxm0KVY'
     spreadsheet = client.open_by_key(spreadsheet_id)
@@ -61,6 +60,9 @@ def search_keywords(dataframe, country, creds):
     found_keyword_column = []
     translation_column = []
     suggestion2_column = []
+
+    language_code = country_language_mapping.get(country, 'en')  # Determine language_code
+    st.write(f"Using language code: {language_code}")  # Debugging line to check language code
 
     for keyword in dataframe['Keyword']:
         found = False
@@ -73,7 +75,7 @@ def search_keywords(dataframe, country, creds):
                 break
         if not found:
             translated_keyword = translate_text(keyword, language_code)
-            suggestions = suggest_words(translated_keyword, language_code)
+            suggestions = suggest_words(translated_keyword)
             found_keyword_column.append("Keyword not saved in the database yet")
             translation_column.append(translated_keyword)
             suggestion2_column.append(", ".join(suggestions))
