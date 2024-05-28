@@ -6,4 +6,4 @@ gspread
 oauth2client
 pytrends
 openpyxl
-google.cloud
+google-cloud-translate
