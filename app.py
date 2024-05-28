@@ -6,6 +6,7 @@ from pytrends.request import TrendReq
 import json
 import time
 from pytrends.exceptions import TooManyRequestsError
+import requests
 
 # Mapping of provided country codes to their respective language codes
 country_language_mapping = {
@@ -54,6 +55,23 @@ def get_keyword_suggestions(keyword, language_code, country_code):
             wait_time *= 2  # Exponential backoff
 
     return ["No suggestion available"]
+
+def get_bing_suggestions(keyword, language_code):
+    api_key = st.secrets["bing_api_key"]  # Ensure you have the Bing API key in your Streamlit secrets
+    endpoint = "https://api.bing.microsoft.com/v7.0/suggestions"
+    
+    headers = {"Ocp-Apim-Subscription-Key": api_key}
+    params = {"q": keyword, "mkt": language_code}
+    
+    response = requests.get(endpoint, headers=headers, params=params)
+    response.raise_for_status()
+    
+    suggestions = response.json()
+    if "suggestionGroups" in suggestions and suggestions["suggestionGroups"]:
+        suggestions_list = suggestions["suggestionGroups"][0]["searchSuggestions"]
+        return [suggestion["displayText"] for suggestion in suggestions_list]
+    else:
+        return ["No suggestion available"]
 
 def search_keywords(dataframe, country, creds):
     client = gspread.authorize(creds)
