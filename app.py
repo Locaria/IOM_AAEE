@@ -34,7 +34,7 @@ def get_google_sheets_credentials():
     credentials = ServiceAccountCredentials.from_json_keyfile_dict(secret, scope)
     return credentials
 
-def get_keyword_suggestions(keyword, language_code):
+def get_keyword_suggestions(keyword, language_code, country_code):
     pytrends = TrendReq(hl=language_code, tz=360)
     attempts = 0
     max_attempts = 5
@@ -42,7 +42,7 @@ def get_keyword_suggestions(keyword, language_code):
 
     while attempts < max_attempts:
         try:
-            pytrends.build_payload([keyword], cat=0, timeframe='today 12-m', geo='', gprop='')
+            pytrends.build_payload([keyword], cat=0, timeframe='today 12-m', geo=country_code, gprop='')
             data = pytrends.related_queries()
             if data[keyword]['top'] is not None:
                 return data[keyword]['top']['query'].tolist()
@@ -79,7 +79,7 @@ def search_keywords(dataframe, country, creds):
                 found = True
                 break
         if not found:
-            suggestions = get_keyword_suggestions(keyword, language_code)  # Pass language_code to function
+            suggestions = get_keyword_suggestions(keyword, language_code, country)  # Pass language_code and country
             keyword_column.append("Keyword not saved in the database yet")
             suggestion_column.append(", ".join(suggestions))
             if "No suggestion available" not in suggestions:
@@ -87,6 +87,8 @@ def search_keywords(dataframe, country, creds):
 
     dataframe['Found Keyword'] = keyword_column
     dataframe['Suggested Keywords'] = suggestion_column
+
+    return dataframe, new_suggestions
 
     return dataframe, new_suggestions
 
