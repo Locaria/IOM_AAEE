@@ -7,12 +7,12 @@ from translate import Translator as Translate
 import nltk
 from nltk.corpus import wordnet
 
-# Baixar os dados necessários do NLTK de forma silenciosa
+
 nltk.download('wordnet', quiet=True)
 nltk.download('omw-1.4', quiet=True)
 nltk.download('stopwords', quiet=True)
 
-# Mapeamento dos códigos de país para seus respectivos códigos de idioma
+
 country_language_mapping = {
     'CZ': 'czech',  # República Tcheca
     'DE': 'german',  # Alemanha
@@ -43,6 +43,7 @@ def translate_text(text, target_language):
     try:
         translator = Translate(to_lang=target_language)
         translation = translator.translate(text)
+        st.write(f"Debug: Translated '{text}' to '{translation}'")  # Linha de depuração
         return translation.strip()
     except Exception as e:
         st.write(f"Error translating text '{text}': {e}")
@@ -52,10 +53,11 @@ def suggest_words(word, language_code):
     suggestions = set()
 
     try:
-        # Se a língua não for inglês, traduzir para inglês
+        
         if language_code != 'english':
             translator = Translate(to_lang='en')
             word_en = translator.translate(word)
+            st.write(f"Debug: Translated word to English: '{word}' -> '{word_en}'")  # Linha de depuração
         else:
             word_en = word
 
@@ -64,13 +66,14 @@ def suggest_words(word, language_code):
             for lemma in synset.lemmas():
                 suggestions.add(lemma.name())
 
-        # Traduzir de volta para o idioma original, se necessário
+        
         if language_code != 'english':
             suggestions_translated = set()
             translator = Translate(to_lang=language_code)
             for suggestion in suggestions:
                 try:
                     suggestion_translated = translator.translate(suggestion)
+                    st.write(f"Debug: Translated suggestion to {language_code}: '{suggestion}' -> '{suggestion_translated}'")  # Linha de depuração
                     suggestions_translated.add(suggestion_translated)
                 except Exception as e:
                     st.write(f"Error translating suggestion '{suggestion}': {e}")
@@ -120,7 +123,7 @@ def search_keywords(dataframe, country, creds):
     return dataframe
 
 def main():
-    st.title('Keyword Checker and Suggestion Tool')
+    st.title('Keyword Checker and Translation Tool')
 
     st.write("Upload an Excel file or paste a word, choose the country, and get keyword translations.")
 
@@ -130,6 +133,7 @@ def main():
 
     if st.button("Process"):
         creds = get_google_sheets_credentials()
+        language_code = country_language_mapping.get(country, 'english')
 
         if uploaded_file:
             df = pd.read_excel(uploaded_file)
