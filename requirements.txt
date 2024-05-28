@@ -11,3 +11,4 @@ gensim
 scipy
 numpy
 spacy
+nltk
