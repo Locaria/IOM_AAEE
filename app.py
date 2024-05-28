@@ -74,7 +74,9 @@ def search_keywords(dataframe, country, creds):
                 break
         if not found:
             translated_keyword = translate_text(keyword, language_code)
+            st.write(f"Translated '{keyword}' to '{translated_keyword}'")  # Debugging line
             suggestions = suggest_words(translated_keyword)
+            st.write(f"Suggestions for '{translated_keyword}': {suggestions}")  # Debugging line
             found_keyword_column.append("Keyword not saved in the database yet")
             translation_column.append(translated_keyword)
             suggestion2_column.append(", ".join(suggestions) if suggestions else "N/A")
