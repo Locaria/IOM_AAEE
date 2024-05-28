@@ -47,28 +47,32 @@ def suggest_words(word, language_code):
     blob = TextBlob(word)
     suggestions = set()
 
-    # Se a língua não for inglês, traduzir para inglês
-    if language_code != 'en':
-        word_en = str(blob.translate(to='en'))
-    else:
-        word_en = word
+    try:
+        # Se a língua não for inglês, traduzir para inglês
+        if language_code != 'en':
+            word_en = str(blob.translate(to='en'))
+        else:
+            word_en = word
 
-    synsets = wordnet.synsets(word_en)
-    for synset in synsets:
-        for lemma in synset.lemmas():
-            suggestions.add(lemma.name())
+        synsets = wordnet.synsets(word_en)
+        for synset in synsets:
+            for lemma in synset.lemmas():
+                suggestions.add(lemma.name())
 
-    # Traduzir de volta para o idioma original, se necessário
-    if language_code != 'en':
-        suggestions_translated = set()
-        for suggestion in suggestions:
-            suggestion_blob = TextBlob(suggestion)
-            try:
-                suggestion_translated = str(suggestion_blob.translate(to=language_code))
-                suggestions_translated.add(suggestion_translated)
-            except Exception as e:
-                st.write(f"Error translating suggestion '{suggestion}': {e}")
-        suggestions = suggestions_translated
+        # Traduzir de volta para o idioma original, se necessário
+        if language_code != 'en':
+            suggestions_translated = set()
+            for suggestion in suggestions:
+                suggestion_blob = TextBlob(suggestion)
+                try:
+                    suggestion_translated = str(suggestion_blob.translate(to=language_code))
+                    suggestions_translated.add(suggestion_translated)
+                except Exception as e:
+                    st.write(f"Error translating suggestion '{suggestion}': {e}")
+            suggestions = suggestions_translated
+    except Exception as e:
+        st.write(f"Error processing word '{word}': {e}")
+        suggestions = []
 
     return list(suggestions)
 
