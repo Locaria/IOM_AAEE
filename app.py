@@ -123,7 +123,7 @@ def search_keywords(dataframe, country, creds):
     return dataframe
 
 def main():
-    st.title('Keyword Checker and Translation Tool')
+    st.title('Keyword Checker and Suggestion Tool')
 
     st.write("Upload an Excel file or paste a word, choose the country, and get keyword translations.")
 
