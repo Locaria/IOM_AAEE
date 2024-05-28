@@ -40,9 +40,13 @@ def get_google_sheets_credentials():
     return credentials
 
 def translate_text(text, target_language):
-    translator = Translate(to_lang=target_language)
-    translation = translator.translate(text)
-    return translation
+    try:
+        translator = Translate(to_lang=target_language)
+        translation = translator.translate(text)
+        return translation.strip()
+    except Exception as e:
+        st.write(f"Error translating text '{text}': {e}")
+        return text
 
 def suggest_words(word, language_code):
     suggestions = set()
@@ -116,7 +120,7 @@ def search_keywords(dataframe, country, creds):
     return dataframe
 
 def main():
-    st.title('Keyword Checker and Translation Tool')
+    st.title('Keyword Checker and Suggestion Tool')
 
     st.write("Upload an Excel file or paste a word, choose the country, and get keyword translations.")
 
@@ -126,7 +130,6 @@ def main():
 
     if st.button("Process"):
         creds = get_google_sheets_credentials()
-        language_code = country_language_mapping.get(country, 'english')
 
         if uploaded_file:
             df = pd.read_excel(uploaded_file)
