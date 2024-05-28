@@ -10,6 +10,7 @@ import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 import asyncio
+import aiohttp
 
 # Baixar os dados necessários do NLTK de forma silenciosa
 nltk.download('wordnet', quiet=True)
@@ -53,7 +54,7 @@ def suggest_words(word, language_code):
     suggestions = set()
 
     try:
-        # Se a língua não for inglês, traduzir para inglês
+        
         if language_code != 'english':
             translator = Translate(to_lang='en')
             word_en = translator.translate(word)
@@ -64,8 +65,6 @@ def suggest_words(word, language_code):
         for synset in synsets:
             for lemma in synset.lemmas():
                 suggestions.add(lemma.name())
-
-        # Traduzir de volta para o idioma original, se necessário
         if language_code != 'english':
             suggestions_translated = set()
             translator = Translate(to_lang=language_code)
@@ -93,8 +92,8 @@ def search_keywords(dataframe, country, creds):
     translation_column = []
     suggestion2_column = []
 
-    language_code = country_language_mapping.get(country, 'english')  # Determinar o código do idioma
-    st.write(f"Using language code: {language_code}")  # Linha de depuração para verificar o código do idioma
+    language_code = country_language_mapping.get(country, 'english')  
+    st.write(f"Using language code: {language_code}")  
 
     for keyword in dataframe['Keyword']:
         found = False
@@ -107,9 +106,9 @@ def search_keywords(dataframe, country, creds):
                 break
         if not found:
             translated_keyword = translate_text(keyword, language_code)
-            st.write(f"Translated '{keyword}' to '{translated_keyword}'")  # Linha de depuração
+            st.write(f"Translated '{keyword}' to '{translated_keyword}'")  
             suggestions = suggest_words(translated_keyword, language_code)
-            st.write(f"Suggestions for '{translated_keyword}': {suggestions}")  # Linha de depuração
+            st.write(f"Suggestions for '{translated_keyword}': {suggestions}") 
             found_keyword_column.append("Keyword not saved in the database yet")
             translation_column.append(translated_keyword)
             suggestion2_column.append(", ".join(suggestions) if suggestions else "N/A")
@@ -120,16 +119,19 @@ def search_keywords(dataframe, country, creds):
 
     return dataframe
 
-async def fetch_url(url):
-    response = requests.get(url)
-    return response.content
+async def fetch_url(session, url):
+    async with session.get(url) as response:
+        return await response.text()
+
+async def fetch_content(url):
+    async with aiohttp.ClientSession() as session:
+        html_content = await fetch_url(session, url)
+        return html_content
 
 def extract_keywords_from_url(url, language_code):
     try:
         st.write(f"Fetching content from URL: {url}")
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        html_content = loop.run_until_complete(fetch_url(url))
+        html_content = asyncio.run(fetch_content(url))
         soup = BeautifulSoup(html_content, 'html.parser')
         
         st.write("Processing HTML content...")
@@ -156,7 +158,7 @@ def extract_keywords_from_url(url, language_code):
         return []
 
 def main():
-    st.title('Keyword Checker and Translation Tool')
+    st.title('Keyword Checker and Suggestion Tool')
 
     st.write("Upload an Excel file, paste a word or a URL, choose the country, and get keyword translations.")
 
