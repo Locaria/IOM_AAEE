@@ -1,4 +1,5 @@
 import openai
+import os
 import streamlit as st
 import pandas as pd
 import gspread
@@ -7,6 +8,7 @@ from pytrends.request import TrendReq
 import json
 import time
 from pytrends.exceptions import TooManyRequestsError
+from openai import OpenAI
 
 # Mapping of provided country codes to their respective language codes
 country_language_mapping = {
@@ -57,18 +59,26 @@ def get_google_trends_suggestions(keyword, language_code, country_code):  # Adde
     return ["No suggestion available"]
 
 def get_chatgpt_suggestions(keyword, language_code):
-    openai.api_key = st.secrets["openai"]["api_key"]
+    client = openai.OpenAI(api_key=st.secrets["openai"]["api_key"])
     
     prompt = f"Generate keyword suggestions for the keyword '{keyword}' in {language_code.split('-')[0]}."
     
-    response = openai.Completion.create(
-        engine="text-davinci-003",
-        prompt=prompt,
-        max_tokens=50
-    )
-    
-    suggestions = response.choices[0].text.strip().split("\n")
-    return suggestions if suggestions else ["No suggestion available"]
+    try:
+        response = client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": prompt}
+            ],
+            model="gpt-3.5-turbo",
+        )
+        suggestions = response.choices[0]["message"]["content"].strip().split("\n")
+        return suggestions if suggestions else ["No suggestion available"]
+    except openai.error.RateLimitError as e:
+        st.error(f"Rate limit exceeded: {e}")
+        return ["Rate limit exceeded. Please try again later."]
+    except openai.error.OpenAIError as e:
+        st.error(f"An error occurred: {e}")
+        return ["An error occurred. Please try again later."]
 
 def search_keywords(dataframe, country, creds):
     client = gspread.authorize(creds)
