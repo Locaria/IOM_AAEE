@@ -39,15 +39,14 @@ def translate_text(text, target_language):
     return translation
 
 def suggest_words(word, language_code):
-    url = f"https://www.openthesaurus.de/synonyme/search?q={word}&format=application/json"
+    url = f"https://api.datamuse.com/words?ml={word}&v={language_code}"
     response = requests.get(url)
     suggestions = set()  # Usar um set para evitar palavras duplicadas
 
     if response.status_code == 200:
         data = response.json()
-        for synset in data.get('synsets', []):
-            for term in synset.get('terms', []):
-                suggestions.add(term['term'])
+        for item in data:
+            suggestions.add(item['word'])
     
     return list(suggestions)
 
