@@ -6,8 +6,6 @@ import json
 from translate import Translator as Translate
 import requests
 
-dictionary = PyDictionary()
-
 # Mapping of provided country codes to their respective language codes
 country_language_mapping = {
     'CZ': 'cs',  # Czech Republic
