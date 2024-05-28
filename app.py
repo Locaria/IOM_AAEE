@@ -66,6 +66,7 @@ def search_keywords(dataframe, country, creds):
     suggestion_column = []
 
     language_code = country_language_mapping.get(country, 'en-US')  # Determine language_code
+    st.write(f"Using language code: {language_code}")  # Debugging line to check language code
 
     new_suggestions = []
 
