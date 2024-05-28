@@ -1,17 +1,9 @@
-import openai
-import os
 import streamlit as st
 import pandas as pd
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from pytrends.request import TrendReq
 import json
-import time
-from pytrends.exceptions import TooManyRequestsError
-from openai.error import RateLimitError, OpenAIError # type: ignore
-
- #secrets.toml from Streamlit
-openai.api_key = os.getenv("OPENAI_API_KEY", st.secrets["openai"]["api_key"])
 
 # Mapping of provided country codes to their respective language codes
 country_language_mapping = {
@@ -40,59 +32,14 @@ def get_google_sheets_credentials():
     credentials = ServiceAccountCredentials.from_json_keyfile_dict(secret, scope)
     return credentials
 
-def get_google_trends_suggestions(keyword, language_code, country_code):  # Added country_code parameter
+def get_keyword_suggestions(keyword, language_code):
     pytrends = TrendReq(hl=language_code, tz=360)
-    attempts = 0
-    max_attempts = 5
-    wait_time = 2  # Initial wait time in seconds
-
-    while attempts < max_attempts:
-        try:
-            pytrends.build_payload([keyword], cat=0, timeframe='today 12-m', geo=country_code, gprop='')  # Use country_code
-            data = pytrends.related_queries()
-            if data[keyword]['top'] is not None:
-                return data[keyword]['top']['query'].tolist()
-            else:
-                return ["No suggestion available"]
-        except TooManyRequestsError:
-            attempts += 1
-            time.sleep(wait_time)
-            wait_time *= 2  # Exponential backoff
-
-    return ["No suggestion available"]
-
-def get_chatgpt_suggestions(keyword, language_code):
-    client = openai.OpenAI(api_key=st.secrets["openai"]["api_key"])
-    
-    prompt = f"Generate keyword suggestions for the keyword '{keyword}' in {language_code.split('-')[0]}."
-
-    attempts = 0
-    max_attempts = 5
-    wait_time = 2  # Initial wait time in seconds
-    
-    while attempts < max_attempts:
-        try:
-            response = client.chat.completions.create(
-                messages=[
-                    {"role": "system", "content": "You are a helpful assistant."},
-                    {"role": "user", "content": prompt}
-                ],
-                model="gpt-4",
-            )
-            suggestions = response.choices[0]["message"]["content"].strip().split("\n")
-            return suggestions if suggestions else ["No suggestion available"]
-        except RateLimitError as e:
-            attempts += 1
-            if attempts < max_attempts:
-                st.warning(f"Rate limit exceeded. Retrying in {wait_time} seconds...")
-                time.sleep(wait_time)
-                wait_time *= 2  # Exponential backoff
-            else:
-                st.error(f"Rate limit exceeded: {e}")
-                return ["Rate limit exceeded. Please try again later."]
-        except OpenAIError as e:
-            st.error(f"An error occurred: {e}")
-            return ["An error occurred. Please try again later."]
+    pytrends.build_payload([keyword], cat=0, timeframe='today 12-m', geo='', gprop='')
+    data = pytrends.related_queries()
+    if data[keyword]['top'] is not None:
+        return data[keyword]['top']['query'].tolist()
+    else:
+        return ["No suggestion available"]
 
 def search_keywords(dataframe, country, creds):
     client = gspread.authorize(creds)
@@ -104,8 +51,7 @@ def search_keywords(dataframe, country, creds):
     keyword_column = []
     suggestion_column = []
 
-    language_code = country_language_mapping.get(country, 'en-US')  # Determine language_code
-    st.write(f"Using language code: {language_code}")  # Debugging line to check language code
+    language_code = country_language_mapping.get(country, 'en-US')
 
     new_suggestions = []
 
@@ -118,12 +64,7 @@ def search_keywords(dataframe, country, creds):
                 found = True
                 break
         if not found:
-            # First try Google Trends for suggestions
-            suggestions = get_google_trends_suggestions(keyword, language_code, country)
-            if "No suggestion available" in suggestions:
-                # If no suggestions from Google Trends, try ChatGPT
-                suggestions = get_chatgpt_suggestions(keyword, language_code)
-            
+            suggestions = get_keyword_suggestions(keyword, language_code)
             keyword_column.append("Keyword not saved in the database yet")
             suggestion_column.append(", ".join(suggestions))
             if "No suggestion available" not in suggestions:
@@ -173,3 +114,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
