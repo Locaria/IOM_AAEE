@@ -1,3 +1,4 @@
+import openai
 import streamlit as st
 import pandas as pd
 import gspread
@@ -6,7 +7,6 @@ from pytrends.request import TrendReq
 import json
 import time
 from pytrends.exceptions import TooManyRequestsError
-import requests
 
 # Mapping of provided country codes to their respective language codes
 country_language_mapping = {
@@ -56,28 +56,19 @@ def get_google_trends_suggestions(keyword, language_code, country_code):  # Adde
 
     return ["No suggestion available"]
 
-def get_serpapi_suggestions(keyword, language_code, country_code):
-    api_key = st.secrets["serpapi"]["api_key"]
-    endpoint = "https://serpapi.com/search"
+def get_chatgpt_suggestions(keyword, language_code):
+    openai.api_key = st.secrets["openai"]["api_key"]
     
-    params = {
-        "engine": "google",
-        "q": keyword,
-        "hl": language_code,
-        "gl": country_code,
-        "api_key": api_key
-    }
+    prompt = f"Generate keyword suggestions for the keyword '{keyword}' in {language_code.split('-')[0]}."
     
-    response = requests.get(endpoint, params=params)
-    response.raise_for_status()
+    response = openai.Completion.create(
+        engine="text-davinci-003",
+        prompt=prompt,
+        max_tokens=50
+    )
     
-    suggestions = response.json()
-    if "related_questions" in suggestions:
-        return [item["question"] for item in suggestions["related_questions"]]
-    elif "related_searches" in suggestions:
-        return [item["query"] for item in suggestions["related_searches"]]
-    else:
-        return ["No suggestion available"]
+    suggestions = response.choices[0].text.strip().split("\n")
+    return suggestions if suggestions else ["No suggestion available"]
 
 def search_keywords(dataframe, country, creds):
     client = gspread.authorize(creds)
@@ -106,8 +97,8 @@ def search_keywords(dataframe, country, creds):
             # First try Google Trends for suggestions
             suggestions = get_google_trends_suggestions(keyword, language_code, country)
             if "No suggestion available" in suggestions:
-                # If no suggestions from Google Trends, try SerpApi
-                suggestions = get_serpapi_suggestions(keyword, language_code, country)
+                # If no suggestions from Google Trends, try ChatGPT
+                suggestions = get_chatgpt_suggestions(keyword, language_code)
             
             keyword_column.append("Keyword not saved in the database yet")
             suggestion_column.append(", ".join(suggestions))
