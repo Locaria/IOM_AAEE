@@ -120,18 +120,30 @@ def search_keywords(dataframe, country, creds):
     return dataframe
 
 async def fetch_url(session, url):
-    async with session.get(url) as response:
-        return await response.text()
+    try:
+        async with session.get(url, timeout=60) as response:
+            response.raise_for_status()  # Ensure we raise an exception for HTTP errors
+            return await response.text()
+    except aiohttp.ClientError as e:
+        st.write(f"HTTP error occurred: {e}")
+    except asyncio.TimeoutError:
+        st.write(f"Timeout error occurred when fetching {url}")
+    except Exception as e:
+        st.write(f"An error occurred: {e}")
+    return None
 
 async def fetch_content(url):
     async with aiohttp.ClientSession() as session:
-        html_content = await fetch_url(session, url)
-        return html_content
+        return await fetch_url(session, url)
 
 def extract_keywords_from_url(url, language_code):
     try:
         st.write(f"Fetching content from URL: {url}")
         html_content = asyncio.run(fetch_content(url))
+        if not html_content:
+            st.write(f"Failed to fetch content from URL: {url}")
+            return []
+        
         soup = BeautifulSoup(html_content, 'html.parser')
         
         st.write("Processing HTML content...")
