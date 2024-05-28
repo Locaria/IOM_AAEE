@@ -6,7 +6,6 @@ import json
 from translate import Translator
 import spacy
 
-nlp = spacy.load(language_code)  
 
 # Mapping of provided country codes to their respective language codes
 country_language_mapping = {
@@ -40,8 +39,9 @@ def translate_text(text, target_language):
     translation = translator.translate(text, dest=target_language)
     return translation.text
 
-def suggest_words(text):
+def suggest_words(text, language_code):
     # Processar o texto traduzido com spaCy
+    nlp = spacy.load(language_code)  
     doc = nlp(text)
 
     # Obter palavras semelhantes ou sinônimos
@@ -73,7 +73,7 @@ def search_keywords(dataframe, country, creds):
                 break
         if not found:
             translated_keyword = translate_text(keyword, language_code)
-            suggestions = suggest_words(translated_keyword)
+            suggestions = suggest_words(translated_keyword, language_code)
             found_keyword_column.append("Keyword not saved in the database yet")
             translation_column.append(translated_keyword)
             suggestion2_column.append(", ".join(suggestions))
