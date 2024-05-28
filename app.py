@@ -132,20 +132,23 @@ def extract_keywords_from_url(url, language_code):
         html_content = loop.run_until_complete(fetch_url(url))
         soup = BeautifulSoup(html_content, 'html.parser')
         
+        st.write("Processing HTML content...")
+
         # Remove scripts and styles
         for script in soup(["script", "style"]):
             script.decompose()
-        
+
+        st.write("Extracting text from HTML...")
         text = ' '.join(soup.stripped_strings)
         words = text.split()
-        
+
         # Carregar as stop words com base no código do idioma
         if language_code in stopwords.fileids():
             stop_words = set(stopwords.words(language_code))
         else:
             stop_words = set(stopwords.words('english'))  # Usar inglês como padrão se o idioma não for encontrado
-        
-        st.write("Extracting keywords...")
+
+        st.write("Filtering and extracting keywords...")
         keywords = [word for word in tqdm(words) if word.lower() not in stop_words and word.isalpha()]
         return keywords
     except Exception as e:
