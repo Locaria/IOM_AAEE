@@ -8,7 +8,9 @@ from pytrends.request import TrendReq
 import json
 import time
 from pytrends.exceptions import TooManyRequestsError
-from openai import OpenAI
+
+ #secrets.toml from Streamlit
+openai.api_key = os.getenv("OPENAI_API_KEY", st.secrets["openai"]["api_key"])
 
 # Mapping of provided country codes to their respective language codes
 country_language_mapping = {
@@ -69,7 +71,7 @@ def get_chatgpt_suggestions(keyword, language_code):
                 {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": prompt}
             ],
-            model="gpt-3.5-turbo",
+            model="gpt-4",
         )
         suggestions = response.choices[0]["message"]["content"].strip().split("\n")
         return suggestions if suggestions else ["No suggestion available"]
