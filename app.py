@@ -150,4 +150,64 @@ def extract_keywords_from_url(url, language_code):
             script.decompose()
 
         st.write("Extracting text from HTML...")
-        text = ' '.
+        text = ' '.join(soup.stripped_strings)
+        words = text.split()
+
+        # Carregar as stop words com base no código do idioma
+        if language_code in stopwords.fileids():
+            stop_words = set(stopwords.words(language_code))
+        else:
+            stop_words = set(stopwords.words('english'))  # Usar inglês como padrão se o idioma não for encontrado
+
+        st.write("Filtering and extracting keywords...")
+        keywords = [word for word in tqdm(words) if word.lower() not in stop_words and word.isalpha()]
+        return keywords
+    except Exception as e:
+        st.write(f"Error extracting keywords from URL '{url}': {e}")
+        return []
+
+def main():
+    st.title('Keyword Checker and Translation Tool')
+
+    st.write("Upload an Excel file, paste a word or a URL, choose the country, and get keyword translations.")
+
+    uploaded_file = st.file_uploader("Choose an Excel file", type=["xlsx", "xls"])
+    word_input = st.text_input("Or enter a word")
+    url_input = st.text_input("Or enter a URL")
+    country = st.selectbox("Select Country", options=list(country_language_mapping.keys()))
+
+    if st.button("Process"):
+        creds = get_google_sheets_credentials()
+        language_code = country_language_mapping.get(country, 'english')
+
+        if uploaded_file:
+            df = pd.read_excel(uploaded_file)
+            st.write("File uploaded successfully!")
+            updated_df = search_keywords(df, country, creds)
+            st.write("Keyword results:")
+            st.dataframe(updated_df)
+
+        elif word_input:
+            df = pd.DataFrame({'Keyword': [word_input]})
+            updated_df = search_keywords(df, country, creds)
+            st.write("Keyword results:")
+            st.dataframe(updated_df)
+
+        elif url_input:
+            keywords = extract_keywords_from_url(url_input, language_code)
+            df = pd.DataFrame({'Keyword': keywords})
+            updated_df = search_keywords(df, country, creds)
+            st.write("Keyword results:")
+            st.dataframe(updated_df)
+
+        if st.button("Confirm and Download"):
+            # Convert DataFrame to Excel and download
+            output_filepath = 'updated_keywords.xlsx'
+            updated_df.to_excel(output_filepath, index=False)
+
+            st.success("Updated keywords have been added to the Excel file is ready for download.")
+            with open(output_filepath, "rb") as file:
+                st.download_button(label="Download updated Excel file", data=file, file_name=output_filepath)
+
+if __name__ == '__main__':
+    main()
