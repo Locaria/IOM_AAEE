@@ -10,3 +10,4 @@ translate
 gensim
 scipy
 numpy
+spacy

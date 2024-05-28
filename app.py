@@ -4,7 +4,9 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
 from translate import Translator
-from gensim.models import KeyedVectors
+import spacy
+
+nlp = spacy.load(language_code)  
 
 # Mapping of provided country codes to their respective language codes
 country_language_mapping = {
@@ -34,29 +36,22 @@ def get_google_sheets_credentials():
     return credentials
 
 def translate_text(text, target_language):
-    try:
-        translator = Translator(to_lang=target_language)
-        translation = translator.translate(text)
-        return translation
-    except Exception as e:
-        st.error(f"Translation error: {e}")
-        return text
+    translator = Translator()
+    translation = translator.translate(text, dest=target_language)
+    return translation.text
 
-def load_model(language_code):
-    # This function should load the appropriate model for the given language
-    # For simplicity, we are loading a pre-trained model for English
-    model = KeyedVectors.load_word2vec_format("GoogleNews-vectors-negative300.bin.gz", binary=True)
-    return model
+def suggest_words(text):
+    # Processar o texto traduzido com spaCy
+    doc = nlp(text)
 
-def suggest_words(translation, model):
-    try:
-        suggestions = model.most_similar(positive=[translation], topn=5)
-        suggested_words = [word for word, _ in suggestions]
-        return ", ".join(suggested_words)
-    except KeyError:
-        return "No suggestions available"
+    # Obter palavras semelhantes ou sinônimos
+    suggestions = [token.text for token in doc if token.is_alpha and not token.is_stop]
+    return suggestions
 
 def search_keywords(dataframe, country, creds):
+    language_code = country_language_mapping.get(country, 'en')
+    nlp = spacy.load(language_code)
+
     client = gspread.authorize(creds)
     spreadsheet_id = '1fkzvhb7al-GFajtjRRy3b93vCDdlARBmCTGDrxm0KVY'
     spreadsheet = client.open_by_key(spreadsheet_id)
@@ -66,11 +61,6 @@ def search_keywords(dataframe, country, creds):
     found_keyword_column = []
     translation_column = []
     suggestion2_column = []
-
-    language_code = country_language_mapping.get(country, 'en')  # Determine language_code
-    st.write(f"Using language code: {language_code}")  # Debugging line to check language code
-
-    model = load_model(language_code)  # Load the appropriate model
 
     for keyword in dataframe['Keyword']:
         found = False
@@ -83,10 +73,10 @@ def search_keywords(dataframe, country, creds):
                 break
         if not found:
             translated_keyword = translate_text(keyword, language_code)
-            suggestions = suggest_words(translated_keyword, model)
+            suggestions = suggest_words(translated_keyword)
             found_keyword_column.append("Keyword not saved in the database yet")
             translation_column.append(translated_keyword)
-            suggestion2_column.append(suggestions)
+            suggestion2_column.append(", ".join(suggestions))
 
     dataframe['Found Keyword'] = found_keyword_column
     dataframe['Suggestion1'] = translation_column
