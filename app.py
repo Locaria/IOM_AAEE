@@ -4,6 +4,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
 from translate import Translator
+from gensim.models import KeyedVectors
 
 # Mapping of provided country codes to their respective language codes
 country_language_mapping = {
@@ -41,6 +42,20 @@ def translate_text(text, target_language):
         st.error(f"Translation error: {e}")
         return text
 
+def load_model(language_code):
+    # This function should load the appropriate model for the given language
+    # For simplicity, we are loading a pre-trained model for English
+    model = KeyedVectors.load_word2vec_format("GoogleNews-vectors-negative300.bin.gz", binary=True)
+    return model
+
+def suggest_words(translation, model):
+    try:
+        suggestions = model.most_similar(positive=[translation], topn=5)
+        suggested_words = [word for word, _ in suggestions]
+        return ", ".join(suggested_words)
+    except KeyError:
+        return "No suggestions available"
+
 def search_keywords(dataframe, country, creds):
     client = gspread.authorize(creds)
     spreadsheet_id = '1fkzvhb7al-GFajtjRRy3b93vCDdlARBmCTGDrxm0KVY'
@@ -50,9 +65,12 @@ def search_keywords(dataframe, country, creds):
 
     found_keyword_column = []
     translation_column = []
+    suggestion2_column = []
 
     language_code = country_language_mapping.get(country, 'en')  # Determine language_code
     st.write(f"Using language code: {language_code}")  # Debugging line to check language code
+
+    model = load_model(language_code)  # Load the appropriate model
 
     for keyword in dataframe['Keyword']:
         found = False
@@ -60,15 +78,19 @@ def search_keywords(dataframe, country, creds):
             if line["Target Country"].upper() == country.upper() and keyword.lower() in line["Translation"].lower():
                 found_keyword_column.append(line["Keyword"])
                 translation_column.append("N/A")
+                suggestion2_column.append("N/A")
                 found = True
                 break
         if not found:
             translated_keyword = translate_text(keyword, language_code)
+            suggestions = suggest_words(translated_keyword, model)
             found_keyword_column.append("Keyword not saved in the database yet")
             translation_column.append(translated_keyword)
+            suggestion2_column.append(suggestions)
 
     dataframe['Found Keyword'] = found_keyword_column
-    dataframe['Suggestion'] = translation_column
+    dataframe['Suggestion1'] = translation_column
+    dataframe['Suggestion2'] = suggestion2_column
 
     return dataframe
 
