@@ -56,20 +56,26 @@ def get_keyword_suggestions(keyword, language_code, country_code):
 
     return ["No suggestion available"]
 
-def get_bing_suggestions(keyword, language_code):
-    api_key = st.secrets["bing_api_key"]  # Ensure you have the Bing API key in your Streamlit secrets
-    endpoint = "https://api.bing.microsoft.com/v7.0/suggestions"
+def get_serpapi_suggestions(keyword, language_code, country_code):
+    api_key = st.secrets["serpapi"]["api_key"]
+    endpoint = "https://serpapi.com/search"
     
-    headers = {"Ocp-Apim-Subscription-Key": api_key}
-    params = {"q": keyword, "mkt": language_code}
+    params = {
+        "engine": "google",
+        "q": keyword,
+        "hl": language_code,
+        "gl": country_code,
+        "api_key": api_key
+    }
     
-    response = requests.get(endpoint, headers=headers, params=params)
+    response = requests.get(endpoint, params=params)
     response.raise_for_status()
     
     suggestions = response.json()
-    if "suggestionGroups" in suggestions and suggestions["suggestionGroups"]:
-        suggestions_list = suggestions["suggestionGroups"][0]["searchSuggestions"]
-        return [suggestion["displayText"] for suggestion in suggestions_list]
+    if "related_questions" in suggestions:
+        return [item["question"] for item in suggestions["related_questions"]]
+    elif "related_searches" in suggestions:
+        return [item["query"] for item in suggestions["related_searches"]]
     else:
         return ["No suggestion available"]
 
@@ -97,7 +103,12 @@ def search_keywords(dataframe, country, creds):
                 found = True
                 break
         if not found:
-            suggestions = get_keyword_suggestions(keyword, language_code, country)  # Pass language_code and country
+            # First try Google Trends for suggestions
+            suggestions = get_google_trends_suggestions(keyword, language_code, country)
+            if "No suggestion available" in suggestions:
+                # If no suggestions from Google Trends, try SerpApi
+                suggestions = get_serpapi_suggestions(keyword, language_code, country)
+            
             keyword_column.append("Keyword not saved in the database yet")
             suggestion_column.append(", ".join(suggestions))
             if "No suggestion available" not in suggestions:
@@ -105,8 +116,6 @@ def search_keywords(dataframe, country, creds):
 
     dataframe['Found Keyword'] = keyword_column
     dataframe['Suggested Keywords'] = suggestion_column
-
-    return dataframe, new_suggestions
 
     return dataframe, new_suggestions
 
