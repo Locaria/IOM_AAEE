@@ -8,3 +8,4 @@ pytrends
 openpyxl
 translate
 gensim
+scipy
