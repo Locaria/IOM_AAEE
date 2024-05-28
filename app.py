@@ -8,8 +8,8 @@ from textblob import TextBlob
 from nltk.corpus import wordnet
 import nltk
 
-nltk.download('wordnet')
-nltk.download('omw-1.4')
+nltk.download('wordnet', quiet=True)
+nltk.download('omw-1.4', quiet=True)
 
 # Mapping of provided country codes to their respective language codes
 country_language_mapping = {
