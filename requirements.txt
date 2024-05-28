@@ -13,3 +13,5 @@ numpy
 spacy
 nltk
 requests
+PyDictionary
+sinonimos

@@ -5,6 +5,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 import json
 from translate import Translator as Translate
 import requests
+import sinonimos
 
 # Mapping of provided country codes to their respective language codes
 country_language_mapping = {
@@ -38,17 +39,16 @@ def translate_text(text, target_language):
     translation = translator.translate(text)
     return translation
 
-def suggest_words(word, language_code):
-    url = f"https://api.datamuse.com/words?ml={word}&v={language_code}"
-    response = requests.get(url)
-    suggestions = set()  # Usar um set para evitar palavras duplicadas
-
-    if response.status_code == 200:
-        data = response.json()
-        for item in data:
-            suggestions.add(item['word'])
-    
-    return list(suggestions)
+def suggest_words(word):
+    try:
+        suggestions = sinonimos.get(word)
+        if suggestions:
+            return suggestions
+        else:
+            return []
+    except Exception as e:
+        st.write(f"Error fetching synonyms for {word}: {e}")
+        return []
 
 def search_keywords(dataframe, country, creds):
     client = gspread.authorize(creds)
@@ -80,7 +80,7 @@ def search_keywords(dataframe, country, creds):
             st.write(f"Suggestions for '{translated_keyword}': {suggestions}")  # Debugging line
             found_keyword_column.append("Keyword not saved in the database yet")
             translation_column.append(translated_keyword)
-            suggestion2_column.append(", ".join(suggestions))
+            suggestion2_column.append(", ".join(suggestions) if suggestions else "N/A")
 
     dataframe['Found Keyword'] = found_keyword_column
     dataframe['Suggestion1'] = translation_column
