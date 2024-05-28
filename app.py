@@ -14,22 +14,22 @@ nltk.download('stopwords', quiet=True)
 
 
 country_language_mapping = {
-    'CZ': 'czech',  # República Tcheca
-    'DE': 'german',  # Alemanha
-    'DK': 'danish',  # Dinamarca
-    'ES': 'spanish',  # Espanha
-    'FI': 'finnish',  # Finlândia
-    'FR': 'french',  # França
-    'GR': 'greek',  # Grécia
-    'IT': 'italian',  # Itália
-    'NL': 'dutch',  # Países Baixos
-    'NO': 'norwegian',  # Noruega
-    'PL': 'polish',  # Polônia
+    'CZ': 'czech',  # Czech Republic
+    'DE': 'german',  # Germany
+    'DK': 'danish',  # Denmark
+    'ES': 'spanish',  # Spain
+    'FI': 'finnish',  # Finland
+    'FR': 'french',  # Frence
+    'GR': 'greek',  # Greece
+    'IT': 'italian',  # Italy
+    'NL': 'dutch',  # Netherlands
+    'NO': 'norwegian',  # Norway
+    'PL': 'polish',  # Poland
     'PT': 'portuguese',  # Portugal
-    'SE': 'swedish',  # Suécia
-    'SK': 'slovak',  # Eslováquia
-    'UK': 'english',  # Reino Unido
-    'ES-MX': 'spanish',  # Espanhol (México)
+    'SE': 'swedish',  # Sweden
+    'SK': 'slovak',  # Slovakia
+    'UK': 'english',  # United Kingdon
+    'ES-MX': 'spanish',  # Spanish (Mexico)
 }
 
 def get_google_sheets_credentials():
