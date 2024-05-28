@@ -35,7 +35,7 @@ def get_google_sheets_credentials():
     credentials = ServiceAccountCredentials.from_json_keyfile_dict(secret, scope)
     return credentials
 
-def get_keyword_suggestions(keyword, language_code, country_code):
+def get_google_trends_suggestions(keyword, language_code, country_code):  # Added country_code parameter
     pytrends = TrendReq(hl=language_code, tz=360)
     attempts = 0
     max_attempts = 5
@@ -43,7 +43,7 @@ def get_keyword_suggestions(keyword, language_code, country_code):
 
     while attempts < max_attempts:
         try:
-            pytrends.build_payload([keyword], cat=0, timeframe='today 12-m', geo=country_code, gprop='')
+            pytrends.build_payload([keyword], cat=0, timeframe='today 12-m', geo=country_code, gprop='')  # Use country_code
             data = pytrends.related_queries()
             if data[keyword]['top'] is not None:
                 return data[keyword]['top']['query'].tolist()
