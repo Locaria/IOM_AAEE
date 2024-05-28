@@ -4,9 +4,8 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
 from translate import Translator as Translate
-from textblob import TextBlob
-from nltk.corpus import wordnet
 import nltk
+from nltk.corpus import wordnet
 
 nltk.download('wordnet', quiet=True)
 nltk.download('omw-1.4', quiet=True)
@@ -44,13 +43,13 @@ def translate_text(text, target_language):
     return translation
 
 def suggest_words(word, language_code):
-    blob = TextBlob(word)
     suggestions = set()
 
     try:
         # Se a língua não for inglês, traduzir para inglês
         if language_code != 'en':
-            word_en = str(blob.translate(to='en'))
+            translator = Translate(to_lang='en')
+            word_en = translator.translate(word)
         else:
             word_en = word
 
@@ -62,10 +61,10 @@ def suggest_words(word, language_code):
         # Traduzir de volta para o idioma original, se necessário
         if language_code != 'en':
             suggestions_translated = set()
+            translator = Translate(to_lang=language_code)
             for suggestion in suggestions:
-                suggestion_blob = TextBlob(suggestion)
                 try:
-                    suggestion_translated = str(suggestion_blob.translate(to=language_code))
+                    suggestion_translated = translator.translate(suggestion)
                     suggestions_translated.add(suggestion_translated)
                 except Exception as e:
                     st.write(f"Error translating suggestion '{suggestion}': {e}")

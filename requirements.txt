@@ -13,4 +13,3 @@ numpy
 spacy
 nltk
 requests
-textblob
