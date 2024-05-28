@@ -19,7 +19,7 @@ country_language_mapping = {
     'DK': 'danish',  # Denmark
     'ES': 'spanish',  # Spain
     'FI': 'finnish',  # Finland
-    'FR': 'french',  # Frence
+    'FR': 'french',  # France
     'GR': 'greek',  # Greece
     'IT': 'italian',  # Italy
     'NL': 'dutch',  # Netherlands
