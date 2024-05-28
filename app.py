@@ -4,7 +4,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
 from translate import Translator as Translate
-from PyDictionary import PyDictionary
+import requests
 
 dictionary = PyDictionary()
 
@@ -40,12 +40,18 @@ def translate_text(text, target_language):
     translation = translator.translate(text)
     return translation
 
-def suggest_words(word):
-    suggestions = dictionary.synonym(word)
-    if suggestions:
-        return suggestions
-    else:
-        return []
+def suggest_words(word, language_code):
+    url = f"https://www.openthesaurus.de/synonyme/search?q={word}&format=application/json"
+    response = requests.get(url)
+    suggestions = set()  # Usar um set para evitar palavras duplicadas
+
+    if response.status_code == 200:
+        data = response.json()
+        for synset in data.get('synsets', []):
+            for term in synset.get('terms', []):
+                suggestions.add(term['term'])
+    
+    return list(suggestions)
 
 def search_keywords(dataframe, country, creds):
     client = gspread.authorize(creds)
