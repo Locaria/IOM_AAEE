@@ -64,23 +64,34 @@ def get_chatgpt_suggestions(keyword, language_code):
     client = openai.OpenAI(api_key=st.secrets["openai"]["api_key"])
     
     prompt = f"Generate keyword suggestions for the keyword '{keyword}' in {language_code.split('-')[0]}."
+
+    attempts = 0
+    max_attempts = 5
+    wait_time = 2  # Initial wait time in seconds
     
-    try:
-        response = client.chat.completions.create(
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": prompt}
-            ],
-            model="gpt-4",
-        )
-        suggestions = response.choices[0]["message"]["content"].strip().split("\n")
-        return suggestions if suggestions else ["No suggestion available"]
-    except openai.error.RateLimitError as e:
-        st.error(f"Rate limit exceeded: {e}")
-        return ["Rate limit exceeded. Please try again later."]
-    except openai.error.OpenAIError as e:
-        st.error(f"An error occurred: {e}")
-        return ["An error occurred. Please try again later."]
+    while attempts < max_attempts:
+        try:
+            response = client.chat.completions.create(
+                messages=[
+                    {"role": "system", "content": "You are a helpful assistant."},
+                    {"role": "user", "content": prompt}
+                ],
+                model="gpt-4",
+            )
+            suggestions = response.choices[0]["message"]["content"].strip().split("\n")
+            return suggestions if suggestions else ["No suggestion available"]
+        except openai.error.RateLimitError as e:
+            attempts += 1
+            if attempts < max_attempts:
+                st.warning(f"Rate limit exceeded. Retrying in {wait_time} seconds...")
+                time.sleep(wait_time)
+                wait_time *= 2  # Exponential backoff
+            else:
+                st.error(f"Rate limit exceeded: {e}")
+                return ["Rate limit exceeded. Please try again later."]
+        except openai.error.OpenAIError as e:
+            st.error(f"An error occurred: {e}")
+            return ["An error occurred. Please try again later."]
 
 def search_keywords(dataframe, country, creds):
     client = gspread.authorize(creds)
