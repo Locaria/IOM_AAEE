@@ -3,7 +3,7 @@ import pandas as pd
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
-from google.cloud import translate_v2 as translate
+from translate import Translator
 
 # Mapping of provided country codes to their respective language codes
 country_language_mapping = {
@@ -33,9 +33,13 @@ def get_google_sheets_credentials():
     return credentials
 
 def translate_text(text, target_language):
-    translate_client = translate.Client()
-    result = translate_client.translate(text, target_language=target_language)
-    return result['translatedText']
+    try:
+        translator = Translator(to_lang=target_language)
+        translation = translator.translate(text)
+        return translation
+    except Exception as e:
+        st.error(f"Translation error: {e}")
+        return text
 
 def search_keywords(dataframe, country, creds):
     client = gspread.authorize(creds)
