@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 from tqdm import tqdm
 import asyncio
 import aiohttp
+from time import sleep
 
 # Baixar os dados necessários do NLTK de forma silenciosa
 nltk.download('wordnet', quiet=True)
@@ -119,20 +120,24 @@ def search_keywords(dataframe, country, creds):
 
     return dataframe
 
-async def fetch_url(session, url):
+async def fetch_url(session, url, retries=3):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
     }
-    try:
-        async with session.get(url, headers=headers, timeout=60) as response:
-            response.raise_for_status()  # Ensure we raise an exception for HTTP errors
-            return await response.text()
-    except aiohttp.ClientError as e:
-        st.write(f"HTTP error occurred: {e}")
-    except asyncio.TimeoutError:
-        st.write(f"Timeout error occurred when fetching {url}")
-    except Exception as e:
-        st.write(f"An error occurred: {e}")
+    for attempt in range(retries):
+        try:
+            async with session.get(url, headers=headers, timeout=60) as response:
+                response.raise_for_status()  # Ensure we raise an exception for HTTP errors
+                return await response.text()
+        except aiohttp.ClientError as e:
+            st.write(f"HTTP error occurred: {e}")
+        except asyncio.TimeoutError:
+            st.write(f"Timeout error occurred when fetching {url}")
+        except Exception as e:
+            st.write(f"An error occurred: {e}")
+
+        st.write(f"Retrying... ({attempt + 1}/{retries})")
+        sleep(2)  # Wait before retrying
     return None
 
 async def fetch_content(url):
