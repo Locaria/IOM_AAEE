@@ -7,7 +7,8 @@ from translate import Translator as Translate
 import nltk
 from nltk.corpus import wordnet # type: ignore
 
-nltk.download('wordnet')
+nltk.download('wordnet', quiet=True)
+nltk.download('punkt', quiet=True)
 # Mapping of provided country codes to their respective language codes
 country_language_mapping = {
     'CZ': 'cs',  # Czech Republic
