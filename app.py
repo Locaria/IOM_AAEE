@@ -6,7 +6,6 @@ import json
 from translate import Translator as Translate
 import nltk
 from nltk.corpus import wordnet
-import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 
@@ -119,61 +118,13 @@ def search_keywords(dataframe, country, creds):
 
     return dataframe
 
-def fetch_content(url, retries=3):
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    }
-    for attempt in range(retries):
-        try:
-            response = requests.get(url, headers=headers, timeout=60)
-            response.raise_for_status()
-            return response.text
-        except requests.exceptions.RequestException as e:
-            st.write(f"HTTP error occurred: {e}")
-        st.write(f"Retrying... ({attempt + 1}/{retries})")
-    return None
-
-def extract_keywords_from_url(url, language_code):
-    try:
-        st.write(f"Fetching content from URL: {url}")
-        html_content = fetch_content(url)
-        if not html_content:
-            st.write(f"Failed to fetch content from URL: {url}")
-            return []
-
-        soup = BeautifulSoup(html_content, 'html.parser')
-
-        st.write("Processing HTML content...")
-
-        # Remove scripts and styles
-        for script in soup(["script", "style"]):
-            script.decompose()
-
-        st.write("Extracting text from HTML...")
-        text = ' '.join(soup.stripped_strings)
-        words = text.split()
-
-        # Carregar as stop words com base no código do idioma
-        if language_code in stopwords.fileids():
-            stop_words = set(stopwords.words(language_code))
-        else:
-            stop_words = set(stopwords.words('english'))  # Usar inglês como padrão se o idioma não for encontrado
-
-        st.write("Filtering and extracting keywords...")
-        keywords = [word for word in tqdm(words) if word.lower() not in stop_words and word.isalpha()]
-        return keywords
-    except Exception as e:
-        st.write(f"Error extracting keywords from URL '{url}': {e}")
-        return []
-
 def main():
     st.title('Keyword Checker and Translation Tool')
 
-    st.write("Upload an Excel file, paste a word or a URL, choose the country, and get keyword translations.")
+    st.write("Upload an Excel file or paste a word, choose the country, and get keyword translations.")
 
     uploaded_file = st.file_uploader("Choose an Excel file", type=["xlsx", "xls"])
     word_input = st.text_input("Or enter a word")
-    url_input = st.text_input("Or enter a URL")
     country = st.selectbox("Select Country", options=list(country_language_mapping.keys()))
 
     if st.button("Process"):
@@ -189,13 +140,6 @@ def main():
 
         elif word_input:
             df = pd.DataFrame({'Keyword': [word_input]})
-            updated_df = search_keywords(df, country, creds)
-            st.write("Keyword results:")
-            st.dataframe(updated_df)
-
-        elif url_input:
-            keywords = extract_keywords_from_url(url_input, language_code)
-            df = pd.DataFrame({'Keyword': keywords})
             updated_df = search_keywords(df, country, creds)
             st.write("Keyword results:")
             st.dataframe(updated_df)
