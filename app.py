@@ -41,15 +41,13 @@ def translate_text(text, target_language):
     translation = translator.translate(text)
     return translation
 
-def suggest_words(text):
-    suggestions = []
-    tokens = nltk.word_tokenize(text)
-    for token in tokens:
-        synsets = wordnet.synsets(token)
-        for synset in synsets:
-            for lemma in synset.lemmas():
-                suggestions.append(lemma.name())
-    return suggestions
+def suggest_words(word):
+    suggestions = set()  #avoid dupplicated words
+    synsets = wordnet.synsets(word)
+    for synset in synsets:
+        for lemma in synset.lemmas():
+            suggestions.add(lemma.name())
+    return list(suggestions)
 
 def search_keywords(dataframe, country, creds):
     client = gspread.authorize(creds)
@@ -79,7 +77,7 @@ def search_keywords(dataframe, country, creds):
             suggestions = suggest_words(translated_keyword)
             found_keyword_column.append("Keyword not saved in the database yet")
             translation_column.append(translated_keyword)
-            suggestion2_column.append(", ".join(suggestions))
+            suggestion2_column.append(", ".join(suggestions) if suggestions else "N/A")
 
     dataframe['Found Keyword'] = found_keyword_column
     dataframe['Suggestion1'] = translation_column
