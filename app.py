@@ -81,7 +81,7 @@ def search_keywords(dataframe, country, creds):
             st.write(f"Suggestions for '{translated_keyword}': {suggestions}")  # Debugging line
             found_keyword_column.append("Keyword not saved in the database yet")
             translation_column.append(translated_keyword)
-            suggestion2_column.append(", ".join(suggestions) if suggestions else "N/A")
+            suggestion2_column.append(", ".join(suggestions))
 
     dataframe['Found Keyword'] = found_keyword_column
     dataframe['Suggestion1'] = translation_column
