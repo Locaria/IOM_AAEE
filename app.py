@@ -4,6 +4,8 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from pytrends.request import TrendReq
 import json
+import time
+from pytrends.exceptions import TooManyRequestsError
 
 # Mapping of provided country codes to their respective language codes
 country_language_mapping = {
@@ -32,14 +34,26 @@ def get_google_sheets_credentials():
     credentials = ServiceAccountCredentials.from_json_keyfile_dict(secret, scope)
     return credentials
 
-def get_keyword_suggestions(keyword, language_code):  # Added language_code parameter
-    pytrends = TrendReq(hl=language_code, tz=360)  # Use language_code
-    pytrends.build_payload([keyword], cat=0, timeframe='today 12-m', geo='', gprop='')
-    data = pytrends.related_queries()
-    if data[keyword]['top'] is not None:
-        return data[keyword]['top']['query'].tolist()
-    else:
-        return ["No suggestion available"]
+def get_keyword_suggestions(keyword, language_code):
+    pytrends = TrendReq(hl=language_code, tz=360)
+    attempts = 0
+    max_attempts = 5
+    wait_time = 2  # Initial wait time in seconds
+
+    while attempts < max_attempts:
+        try:
+            pytrends.build_payload([keyword], cat=0, timeframe='today 12-m', geo='', gprop='')
+            data = pytrends.related_queries()
+            if data[keyword]['top'] is not None:
+                return data[keyword]['top']['query'].tolist()
+            else:
+                return ["No suggestion available"]
+        except TooManyRequestsError:
+            attempts += 1
+            time.sleep(wait_time)
+            wait_time *= 2  # Exponential backoff
+
+    return ["No suggestion available"]
 
 def search_keywords(dataframe, country, creds):
     client = gspread.authorize(creds)
