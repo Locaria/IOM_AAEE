@@ -6,14 +6,11 @@ import json
 from translate import Translator as Translate
 import nltk
 from nltk.corpus import wordnet
-from bs4 import BeautifulSoup
-from tqdm import tqdm
 
 # Baixar os dados necessários do NLTK de forma silenciosa
 nltk.download('wordnet', quiet=True)
 nltk.download('omw-1.4', quiet=True)
 nltk.download('stopwords', quiet=True)
-from nltk.corpus import stopwords
 
 # Mapeamento dos códigos de país para seus respectivos códigos de idioma
 country_language_mapping = {
