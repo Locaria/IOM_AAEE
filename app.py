@@ -10,7 +10,7 @@ import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 import asyncio
-import aiohttp
+import requests
 from time import sleep
 
 # Baixar os dados necessários do NLTK de forma silenciosa
@@ -120,40 +120,30 @@ def search_keywords(dataframe, country, creds):
 
     return dataframe
 
-async def fetch_url(session, url, retries=3):
+def fetch_content(url, retries=3):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
     }
     for attempt in range(retries):
         try:
-            async with session.get(url, headers=headers, timeout=60) as response:
-                response.raise_for_status()  # Ensure we raise an exception for HTTP errors
-                return await response.text()
-        except aiohttp.ClientError as e:
+            response = requests.get(url, headers=headers, timeout=60)
+            response.raise_for_status()
+            return response.text
+        except requests.exceptions.RequestException as e:
             st.write(f"HTTP error occurred: {e}")
-        except asyncio.TimeoutError:
-            st.write(f"Timeout error occurred when fetching {url}")
-        except Exception as e:
-            st.write(f"An error occurred: {e}")
-
         st.write(f"Retrying... ({attempt + 1}/{retries})")
-        sleep(2)  # Wait before retrying
     return None
-
-async def fetch_content(url):
-    async with aiohttp.ClientSession() as session:
-        return await fetch_url(session, url)
 
 def extract_keywords_from_url(url, language_code):
     try:
         st.write(f"Fetching content from URL: {url}")
-        html_content = asyncio.run(fetch_content(url))
+        html_content = fetch_content(url)
         if not html_content:
             st.write(f"Failed to fetch content from URL: {url}")
             return []
-        
+
         soup = BeautifulSoup(html_content, 'html.parser')
-        
+
         st.write("Processing HTML content...")
 
         # Remove scripts and styles
