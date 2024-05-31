@@ -184,6 +184,9 @@ def main():
             with open(output_filepath, "rb") as file:
                 st.download_button(label="Download updated Excel file", data=file, file_name=output_filepath)
 
+            # Debug print to ensure suggestions_found is correct
+            st.write(f"Suggestions found: {suggestions_found}")
+
             # Show the Google Sheet update button if suggestions are found
             if suggestions_found:
                 if selected_client == "All Clients":
@@ -211,6 +214,9 @@ def main():
             st.success("Updated keywords have been added to the Excel file and it is ready for download.")
             with open(output_filepath, "rb") as file:
                 st.download_button(label="Download updated Excel file", data=file, file_name=output_filepath)
+
+            # Debug print to ensure suggestions_found is correct
+            st.write(f"Suggestions found: {suggestions_found}")
 
             # Show the Google Sheet update button if suggestions are found
             if suggestions_found:
