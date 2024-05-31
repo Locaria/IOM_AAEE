@@ -131,7 +131,6 @@ def search_keywords(dataframe, country, creds, selected_client):
 
     return dataframe, suggestions_found
 
-
 def get_client_list(creds):
     client = gspread.authorize(creds)
     spreadsheet_id = '1fkzvhb7al-GFajtjRRy3b93vCDdlARBmCTGDrxm0KVY'
@@ -149,28 +148,26 @@ def update_google_sheet_with_suggestions(creds, updated_df, client_name, country
     spreadsheet = client.open_by_key(spreadsheet_id)
     sheet = spreadsheet.sheet1
 
-    for _, row in updated_df.iterrows():  # Use _ since index is not needed
-        if row['Suggestion1'] != 'N/A' or row['Suggestion2'] != 'N/A':
+    for _, row in updated_df.iterrows():
+        if row['Suggestion1'] != 'N/A':
             new_row = [
-                country,             # Target Country
-                row['Suggestion1'],  # Keyword (Suggestion1)
-                row['Keyword'],      # Translation (Original keyword)
-                "",                  # Main Topic (Blank)
-                client_name          # Client
+                country,              # Target Country
+                row['Suggestion1'],   # Keyword (Suggestion1)
+                row['Keyword'],       # Translation (Original keyword)
+                "",                   # Main Topic (Blank)
+                client_name           # Client
             ]
             sheet.append_row(new_row)
 
-            # Also add a row for Suggestion2 if it is valid
-            if row['Suggestion2'] != 'N/A':
-                new_row = [
-                    country,             # Target Country
-                    row['Suggestion2'],  # Keyword (Suggestion2)
-                    row['Keyword'],      # Translation (Original keyword)
-                    "",                  # Main Topic (Blank)
-                    client_name          # Client
-                ]
-                sheet.append_row(new_row)
-
+        if row['Suggestion2'] != 'N/A':
+            new_row = [
+                country,              # Target Country
+                row['Suggestion2'],   # Keyword (Suggestion2)
+                row['Keyword'],       # Translation (Original keyword)
+                "",                   # Main Topic (Blank)
+                client_name           # Client
+            ]
+            sheet.append_row(new_row)
 
 def main():
     st.title('Keyword Checker and Suggestion Tool')
