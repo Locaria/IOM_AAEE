@@ -7,28 +7,29 @@ from translate import Translator as Translate
 import nltk
 from nltk.corpus import wordnet
 import tempfile
+import os
 
 nltk.download('wordnet', quiet=True)
 nltk.download('omw-1.4', quiet=True)
 nltk.download('stopwords', quiet=True)
 
 country_language_mapping = {
-    'CZ': 'czech',  # Czech Republic
-    'DE': 'german',  # Germany
-    'DK': 'danish',  # Denmark
-    'ES': 'spanish',  # Spain
-    'FI': 'finnish',  # Finland
-    'FR': 'french',  # France
-    'GR': 'greek',  # Greece
-    'IT': 'italian',  # Italy
-    'NL': 'dutch',  # Netherlands
-    'NO': 'norwegian',  # Norway
-    'PL': 'polish',  # Poland
-    'PT': 'portuguese',  # Portugal
-    'SE': 'swedish',  # Sweden
-    'SK': 'slovak',  # Slovakia
-    'UK': 'english',  # United Kingdom
-    'ES-MX': 'spanish',  # Spanish (Mexico)
+    'CZ': 'czech',
+    'DE': 'german',
+    'DK': 'danish',
+    'ES': 'spanish',
+    'FI': 'finnish',
+    'FR': 'french',
+    'GR': 'greek',
+    'IT': 'italian',
+    'NL': 'dutch',
+    'NO': 'norwegian',
+    'PL': 'polish',
+    'PT': 'portuguese',
+    'SE': 'swedish',
+    'SK': 'slovak',
+    'UK': 'english',
+    'ES-MX': 'spanish',
 }
 
 def get_google_sheets_credentials():
@@ -49,7 +50,6 @@ def translate_text(text, target_language):
 
 def suggest_words(word, language_code):
     suggestions = set()
-
     try:
         if language_code != 'english':
             translator = Translate(to_lang='en')
@@ -75,7 +75,6 @@ def suggest_words(word, language_code):
     except Exception as e:
         st.write(f"Error processing word '{word}': {e}")
         suggestions = []
-
     return list(suggestions)
 
 def search_keywords(dataframe, country, creds, selected_client):
@@ -90,7 +89,7 @@ def search_keywords(dataframe, country, creds, selected_client):
     suggestion2_column = []
     client_column = []
 
-    language_code = country_language_mapping.get(country, 'english')  # Determine language code
+    language_code = country_language_mapping.get(country, 'english')
     st.write("Using language code: " + language_code)
 
     suggestions_found = False
@@ -119,7 +118,6 @@ def search_keywords(dataframe, country, creds, selected_client):
 
         client_column.append(", ".join(clients_found) if clients_found else "N/A")
 
-    # Check lengths of the lists
     assert len(found_keyword_column) == len(dataframe), "Mismatch in length of 'Found Keyword' column"
     assert len(translation_column) == len(dataframe), "Mismatch in length of 'Suggestion1' column"
     assert len(suggestion2_column) == len(dataframe), "Mismatch in length of 'Suggestion2' column"
@@ -149,32 +147,32 @@ def update_google_sheet_with_suggestions(creds, updated_df, client_name, country
     spreadsheet = client.open_by_key(spreadsheet_id)
     sheet = spreadsheet.sheet1
 
-    st.write("Updating Google Sheet...")  # Debugging statement
+    st.write("Updating Google Sheet...")
 
     for _, row in updated_df.iterrows():
         if row['Suggestion1'] != 'N/A':
             new_row = [
-                country,              # Target Country
-                row['Suggestion1'],   # Keyword (Suggestion1)
-                row['Keyword'],       # Translation (Original keyword)
-                "",                   # Main Topic (Blank)
-                client_name           # Client
+                country,
+                row['Suggestion1'],
+                row['Keyword'],
+                "",
+                client_name
             ]
-            st.write(f"Appending row for Suggestion1: {new_row}")  # Debugging statement
+            st.write(f"Appending row for Suggestion1: {new_row}")
             sheet.append_row(new_row)
 
         if row['Suggestion2'] != 'N/A':
             new_row = [
-                country,              # Target Country
-                row['Suggestion2'],   # Keyword (Suggestion2)
-                row['Keyword'],       # Translation (Original keyword)
-                "",                   # Main Topic (Blank)
-                client_name           # Client
+                country,
+                row['Suggestion2'],
+                row['Keyword'],
+                "",
+                client_name
             ]
-            st.write(f"Appending row for Suggestion2: {new_row}")  # Debugging statement
+            st.write(f"Appending row for Suggestion2: {new_row}")
             sheet.append_row(new_row)
 
-    st.write("Google Sheet update complete.")  # Debugging statement
+    st.write("Google Sheet update complete.")
 
 def main():
     st.title('Keyword Checker and Suggestion Tool')
@@ -198,35 +196,33 @@ def main():
             st.write("File uploaded successfully!")
             updated_df, suggestions_found = search_keywords(df, country, creds, selected_client)
             st.write("Keyword results:")
+            st.session_state.updated_df = updated_df
+            st.session_state.suggestions_found = suggestions_found
             st.dataframe(updated_df)
-
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
-                df.to_excel(tmp.name, index=False)
-                st.download_button(
-                    label="Download updated Excel file",
-                    data=tmp.name,
-                    file_name='updated_keywords.xlsx'
-                )
-
-            st.success("Updated keywords have been added to the Excel file and it is ready for download.")
-            st.write(f"Suggestions found: {suggestions_found}")
 
         elif word_input:
             df = pd.DataFrame({'Keyword': [word_input]})
             updated_df, suggestions_found = search_keywords(df, country, creds, selected_client)
             st.write("Keyword results:")
+            st.session_state.updated_df = updated_df
+            st.session_state.suggestions_found = suggestions_found
             st.dataframe(updated_df)
 
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
-                df.to_excel(tmp.name, index=False)
-                st.download_button(
-                    label="Download updated Excel file",
-                    data=tmp.name,
-                    file_name='updated_keywords.xlsx'
-                )
+    if 'updated_df' in st.session_state:
+        updated_df = st.session_state.updated_df
+        suggestions_found = st.session_state.suggestions_found
 
-            st.success("Updated keywords have been added to the Excel file and it is ready for download.")
-            st.write(f"Suggestions found: {suggestions_found}")
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
+            updated_df.to_excel(tmp.name, index=False)
+            st.download_button(
+                label="Download updated Excel file",
+                data=open(tmp.name, 'rb').read(),
+                file_name='updated_keywords.xlsx'
+            )
+        os.remove(tmp.name)
+
+        st.success("Updated keywords have been added to the Excel file and it is ready for download.")
+        st.write(f"Suggestions found: {suggestions_found}")
 
         if suggestions_found:
             if selected_client == "All Clients":
