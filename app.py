@@ -148,6 +148,8 @@ def update_google_sheet_with_suggestions(creds, updated_df, client_name, country
     spreadsheet = client.open_by_key(spreadsheet_id)
     sheet = spreadsheet.sheet1
 
+    st.write("Updating Google Sheet...")  # Debugging statement
+
     for _, row in updated_df.iterrows():
         if row['Suggestion1'] != 'N/A':
             new_row = [
@@ -157,6 +159,7 @@ def update_google_sheet_with_suggestions(creds, updated_df, client_name, country
                 "",                   # Main Topic (Blank)
                 client_name           # Client
             ]
+            st.write(f"Appending row for Suggestion1: {new_row}")  # Debugging statement
             sheet.append_row(new_row)
 
         if row['Suggestion2'] != 'N/A':
@@ -167,7 +170,10 @@ def update_google_sheet_with_suggestions(creds, updated_df, client_name, country
                 "",                   # Main Topic (Blank)
                 client_name           # Client
             ]
+            st.write(f"Appending row for Suggestion2: {new_row}")  # Debugging statement
             sheet.append_row(new_row)
+
+    st.write("Google Sheet update complete.")  # Debugging statement
 
 def main():
     st.title('Keyword Checker and Suggestion Tool')
