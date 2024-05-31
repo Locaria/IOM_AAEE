@@ -113,7 +113,7 @@ def search_keywords(dataframe, country, creds, selected_client):
             found_keyword_column.append("Keyword not saved in the database yet")
             translation_column.append(translated_keyword)
             suggestion2_column.append(", ".join(suggestions) if suggestions else "N/A")
-            if suggestions and any(suggestion != "N/A" for suggestion in suggestions):
+            if translated_keyword != "N/A" or any(suggestion != "N/A" for suggestion in suggestions):
                 suggestions_found = True
 
         client_column.append(", ".join(clients_found) if clients_found else "N/A")
@@ -130,6 +130,7 @@ def search_keywords(dataframe, country, creds, selected_client):
     dataframe['Client'] = client_column
 
     return dataframe, suggestions_found
+
 
 def get_client_list(creds):
     client = gspread.authorize(creds)
@@ -148,7 +149,7 @@ def update_google_sheet_with_suggestions(creds, updated_df, client_name, country
     spreadsheet = client.open_by_key(spreadsheet_id)
     sheet = spreadsheet.sheet1
 
-    for index, row in updated_df.iterrows():
+    for _, row in updated_df.iterrows():  # Use _ since index is not needed
         if row['Suggestion1'] != 'N/A':
             new_row = [country, row['Suggestion1'], row['Keyword'], "", client_name]
             sheet.append_row(new_row)
