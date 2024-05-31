@@ -90,20 +90,23 @@ def search_keywords(dataframe, country, creds, selected_client):
     found_keyword_column = []
     translation_column = []
     suggestion2_column = []
+    client_column = []
 
     language_code = country_language_mapping.get(country, 'english')  # Determine language code
     st.write(f"Using language code: {language_code}")  # Debug line
 
     for keyword in dataframe['Keyword']:
         found = False
+        clients_found = set()
         for line in lines:
             if selected_client == "All Clients" or line["Client"].lower() == selected_client.lower():
                 if line["Target Country"].upper() == country.upper() and keyword.lower() in line["Translation"].lower():
                     found_keyword_column.append(line["Keyword"])
                     translation_column.append("N/A")
                     suggestion2_column.append("N/A")
+                    clients_found.add(line["Client"])
                     found = True
-                    break
+
         if not found:
             translated_keyword = translate_text(keyword, language_code)
             st.write(f"Translated '{keyword}' to '{translated_keyword}'")  # Debug line
@@ -113,9 +116,15 @@ def search_keywords(dataframe, country, creds, selected_client):
             translation_column.append(translated_keyword)
             suggestion2_column.append(", ".join(suggestions) if suggestions else "N/A")
 
+        if clients_found:
+            client_column.append(", ".join(clients_found))
+        else:
+            client_column.append("N/A")
+
     dataframe['Found Keyword'] = found_keyword_column
     dataframe['Suggestion1'] = translation_column
     dataframe['Suggestion2'] = suggestion2_column
+    dataframe['Client'] = client_column
 
     return dataframe
 
@@ -128,6 +137,7 @@ def get_client_list(creds):
     clients = set()
     for line in lines:
         clients.add(line["Client"])
+    st.write(f"Debug: Retrieved clients: {clients}")  # Debug line
     return ["All Clients"] + sorted(clients)
 
 def main():
