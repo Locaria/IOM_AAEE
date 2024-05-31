@@ -95,6 +95,8 @@ def search_keywords(dataframe, country, creds, selected_client):
     language_code = country_language_mapping.get(country, 'english')  # Determine language code
     st.write(f"Using language code: {language_code}")  # Debug line
 
+    suggestions_found = False
+
     for keyword in dataframe['Keyword']:
         found = False
         clients_found = set()
@@ -116,6 +118,8 @@ def search_keywords(dataframe, country, creds, selected_client):
             found_keyword_column.append("Keyword not saved in the database yet")
             translation_column.append(translated_keyword)
             suggestion2_column.append(", ".join(suggestions) if suggestions else "N/A")
+            if suggestions:
+                suggestions_found = True
 
         client_column.append(", ".join(clients_found) if clients_found else "N/A")
 
@@ -137,7 +141,7 @@ def search_keywords(dataframe, country, creds, selected_client):
     dataframe['Suggestion2'] = suggestion2_column
     dataframe['Client'] = client_column
 
-    return dataframe
+    return dataframe, suggestions_found
 
 def get_client_list(creds):
     client = gspread.authorize(creds)
@@ -170,24 +174,37 @@ def main():
         if uploaded_file:
             df = pd.read_excel(uploaded_file)
             st.write("File uploaded successfully!")
-            updated_df = search_keywords(df, country, creds, selected_client)
+            updated_df, suggestions_found = search_keywords(df, country, creds, selected_client)
             st.write("Keyword results:")
             st.dataframe(updated_df)
 
-        elif word_input:
-            df = pd.DataFrame({'Keyword': [word_input]})
-            updated_df = search_keywords(df, country, creds, selected_client)
-            st.write("Keyword results:")
-            st.dataframe(updated_df)
-
-        if st.button("Confirm and Download"):
-            # Convert DataFrame to Excel and download
+            # Add download button
             output_filepath = 'updated_keywords.xlsx'
             updated_df.to_excel(output_filepath, index=False)
 
-            st.success("Updated keywords have been added to the Excel file is ready for download.")
+            st.success("Updated keywords have been added to the Excel file and it is ready for download.")
             with open(output_filepath, "rb") as file:
                 st.download_button(label="Download updated Excel file", data=file, file_name=output_filepath)
+
+            if suggestions_found and st.button("Confirm and Add Keyword Suggestions"):
+                st.write("Confirmed and keyword suggestions have been added.")
+
+        elif word_input:
+            df = pd.DataFrame({'Keyword': [word_input]})
+            updated_df, suggestions_found = search_keywords(df, country, creds, selected_client)
+            st.write("Keyword results:")
+            st.dataframe(updated_df)
+
+            # Add download button
+            output_filepath = 'updated_keywords.xlsx'
+            updated_df.to_excel(output_filepath, index=False)
+
+            st.success("Updated keywords have been added to the Excel file and it is ready for download.")
+            with open(output_filepath, "rb") as file:
+                st.download_button(label="Download updated Excel file", data=file, file_name=output_filepath)
+
+            if suggestions_found and st.button("Confirm and Add Keyword Suggestions"):
+                st.write("Confirmed and keyword suggestions have been added.")
 
 if __name__ == '__main__':
     main()
