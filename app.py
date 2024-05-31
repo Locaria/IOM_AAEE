@@ -7,11 +7,9 @@ from translate import Translator as Translate
 import nltk
 from nltk.corpus import wordnet
 
-
 nltk.download('wordnet', quiet=True)
 nltk.download('omw-1.4', quiet=True)
 nltk.download('stopwords', quiet=True)
-
 
 country_language_mapping = {
     'CZ': 'czech',  # Czech Republic
@@ -28,7 +26,7 @@ country_language_mapping = {
     'PT': 'portuguese',  # Portugal
     'SE': 'swedish',  # Sweden
     'SK': 'slovak',  # Slovakia
-    'UK': 'english',  # United Kingdon
+    'UK': 'english',  # United Kingdom
     'ES-MX': 'spanish',  # Spanish (Mexico)
 }
 
@@ -43,7 +41,7 @@ def translate_text(text, target_language):
     try:
         translator = Translate(to_lang=target_language)
         translation = translator.translate(text)
-        st.write(f"Debug: Translated '{text}' to '{translation}'")  # Linha de depuração
+        st.write(f"Debug: Translated '{text}' to '{translation}'")  # Debug line
         return translation.strip()
     except Exception as e:
         st.write(f"Error translating text '{text}': {e}")
@@ -53,11 +51,10 @@ def suggest_words(word, language_code):
     suggestions = set()
 
     try:
-        
         if language_code != 'english':
             translator = Translate(to_lang='en')
             word_en = translator.translate(word)
-            st.write(f"Debug: Translated word to English: '{word}' -> '{word_en}'")  # Linha de depuração
+            st.write(f"Debug: Translated word to English: '{word}' -> '{word_en}'")  # Debug line
         else:
             word_en = word
 
@@ -66,14 +63,13 @@ def suggest_words(word, language_code):
             for lemma in synset.lemmas():
                 suggestions.add(lemma.name())
 
-        
         if language_code != 'english':
             suggestions_translated = set()
             translator = Translate(to_lang=language_code)
             for suggestion in suggestions:
                 try:
                     suggestion_translated = translator.translate(suggestion)
-                    st.write(f"Debug: Translated suggestion to {language_code}: '{suggestion}' -> '{suggestion_translated}'")  # Linha de depuração
+                    st.write(f"Debug: Translated suggestion to {language_code}: '{suggestion}' -> '{suggestion_translated}'")  # Debug line
                     suggestions_translated.add(suggestion_translated)
                 except Exception as e:
                     st.write(f"Error translating suggestion '{suggestion}': {e}")
@@ -84,7 +80,7 @@ def suggest_words(word, language_code):
 
     return list(suggestions)
 
-def search_keywords(dataframe, country, creds):
+def search_keywords(dataframe, country, creds, selected_client):
     client = gspread.authorize(creds)
     spreadsheet_id = '1fkzvhb7al-GFajtjRRy3b93vCDdlARBmCTGDrxm0KVY'
     spreadsheet = client.open_by_key(spreadsheet_id)
@@ -95,23 +91,24 @@ def search_keywords(dataframe, country, creds):
     translation_column = []
     suggestion2_column = []
 
-    language_code = country_language_mapping.get(country, 'english')  # Determinar o código do idioma
-    st.write(f"Using language code: {language_code}")  # Linha de depuração para verificar o código do idioma
+    language_code = country_language_mapping.get(country, 'english')  # Determine language code
+    st.write(f"Using language code: {language_code}")  # Debug line
 
     for keyword in dataframe['Keyword']:
         found = False
         for line in lines:
-            if line["Target Country"].upper() == country.upper() and keyword.lower() in line["Translation"].lower():
-                found_keyword_column.append(line["Keyword"])
-                translation_column.append("N/A")
-                suggestion2_column.append("N/A")
-                found = True
-                break
+            if selected_client == "All Clients" or line["Client"].lower() == selected_client.lower():
+                if line["Target Country"].upper() == country.upper() and keyword.lower() in line["Translation"].lower():
+                    found_keyword_column.append(line["Keyword"])
+                    translation_column.append("N/A")
+                    suggestion2_column.append("N/A")
+                    found = True
+                    break
         if not found:
             translated_keyword = translate_text(keyword, language_code)
-            st.write(f"Translated '{keyword}' to '{translated_keyword}'")  # Linha de depuração
+            st.write(f"Translated '{keyword}' to '{translated_keyword}'")  # Debug line
             suggestions = suggest_words(translated_keyword, language_code)
-            st.write(f"Suggestions for '{translated_keyword}': {suggestions}")  # Linha de depuração
+            st.write(f"Suggestions for '{translated_keyword}': {suggestions}")  # Debug line
             found_keyword_column.append("Keyword not saved in the database yet")
             translation_column.append(translated_keyword)
             suggestion2_column.append(", ".join(suggestions) if suggestions else "N/A")
@@ -122,29 +119,43 @@ def search_keywords(dataframe, country, creds):
 
     return dataframe
 
+def get_client_list(creds):
+    client = gspread.authorize(creds)
+    spreadsheet_id = '1fkzvhb7al-GFajtjRRy3b93vCDdlARBmCTGDrxm0KVY'
+    spreadsheet = client.open_by_key(spreadsheet_id)
+    sheet = spreadsheet.sheet1
+    lines = sheet.get_all_records()
+    clients = set()
+    for line in lines:
+        clients.add(line["Client"])
+    return ["All Clients"] + sorted(clients)
+
 def main():
     st.title('Keyword Checker and Suggestion Tool')
 
     st.write("Upload an Excel file or paste a word, choose the country, and get keyword translations.")
 
+    creds = get_google_sheets_credentials()
+    clients = get_client_list(creds)
+
     uploaded_file = st.file_uploader("Choose an Excel file", type=["xlsx", "xls"])
     word_input = st.text_input("Or enter a word")
     country = st.selectbox("Select Country", options=list(country_language_mapping.keys()))
+    selected_client = st.selectbox("Select Client", options=clients)
 
     if st.button("Process"):
-        creds = get_google_sheets_credentials()
         language_code = country_language_mapping.get(country, 'english')
 
         if uploaded_file:
             df = pd.read_excel(uploaded_file)
             st.write("File uploaded successfully!")
-            updated_df = search_keywords(df, country, creds)
+            updated_df = search_keywords(df, country, creds, selected_client)
             st.write("Keyword results:")
             st.dataframe(updated_df)
 
         elif word_input:
             df = pd.DataFrame({'Keyword': [word_input]})
-            updated_df = search_keywords(df, country, creds)
+            updated_df = search_keywords(df, country, creds, selected_client)
             st.write("Keyword results:")
             st.dataframe(updated_df)
 
