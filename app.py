@@ -41,7 +41,6 @@ def translate_text(text, target_language):
     try:
         translator = Translate(to_lang=target_language)
         translation = translator.translate(text)
-        st.write(f"Debug: Translated '{text}' to '{translation}'")  # Debug line
         return translation.strip()
     except Exception as e:
         st.write(f"Error translating text '{text}': {e}")
@@ -54,7 +53,6 @@ def suggest_words(word, language_code):
         if language_code != 'english':
             translator = Translate(to_lang='en')
             word_en = translator.translate(word)
-            st.write(f"Debug: Translated word to English: '{word}' -> '{word_en}'")  # Debug line
         else:
             word_en = word
 
@@ -69,7 +67,6 @@ def suggest_words(word, language_code):
             for suggestion in suggestions:
                 try:
                     suggestion_translated = translator.translate(suggestion)
-                    st.write(f"Debug: Translated suggestion to {language_code}: '{suggestion}' -> '{suggestion_translated}'")  # Debug line
                     suggestions_translated.add(suggestion_translated)
                 except Exception as e:
                     st.write(f"Error translating suggestion '{suggestion}': {e}")
@@ -93,7 +90,7 @@ def search_keywords(dataframe, country, creds, selected_client):
     client_column = []
 
     language_code = country_language_mapping.get(country, 'english')  # Determine language code
-    st.write(f"Using language code: {language_code}")  # Debug line
+    st.write("Using language code: " + language_code)  # Debug line
 
     suggestions_found = False
 
@@ -112,9 +109,7 @@ def search_keywords(dataframe, country, creds, selected_client):
 
         if not found:
             translated_keyword = translate_text(keyword, language_code)
-            st.write(f"Translated '{keyword}' to '{translated_keyword}'")  # Debug line
             suggestions = suggest_words(translated_keyword, language_code)
-            st.write(f"Suggestions for '{translated_keyword}': {suggestions}")  # Debug line
             found_keyword_column.append("Keyword not saved in the database yet")
             translation_column.append(translated_keyword)
             suggestion2_column.append(", ".join(suggestions) if suggestions else "N/A")
@@ -124,13 +119,6 @@ def search_keywords(dataframe, country, creds, selected_client):
         client_column.append(", ".join(clients_found) if clients_found else "N/A")
 
     # Check lengths of the lists
-    st.write(f"Length of 'Keyword' column: {len(dataframe['Keyword'])}")
-    st.write(f"Length of 'Found Keyword' column: {len(found_keyword_column)}")
-    st.write(f"Length of 'Suggestion1' column: {len(translation_column)}")
-    st.write(f"Length of 'Suggestion2' column: {len(suggestion2_column)}")
-    st.write(f"Length of 'Client' column: {len(client_column)}")
-
-    # Ensure all lists are of the same length as the dataframe
     assert len(found_keyword_column) == len(dataframe), "Mismatch in length of 'Found Keyword' column"
     assert len(translation_column) == len(dataframe), "Mismatch in length of 'Suggestion1' column"
     assert len(suggestion2_column) == len(dataframe), "Mismatch in length of 'Suggestion2' column"
@@ -152,7 +140,6 @@ def get_client_list(creds):
     clients = set()
     for line in lines:
         clients.add(line["Client"])
-    st.write(f"Debug: Retrieved clients: {clients}")  # Debug line
     return ["All Clients"] + sorted(clients)
 
 def update_google_sheet_with_suggestions(creds, updated_df, client_name, country):
