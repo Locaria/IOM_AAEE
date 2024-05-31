@@ -106,6 +106,7 @@ def search_keywords(dataframe, country, creds, selected_client):
                     suggestion2_column.append("N/A")
                     clients_found.add(line["Client"])
                     found = True
+                    break
 
         if not found:
             translated_keyword = translate_text(keyword, language_code)
@@ -116,10 +117,7 @@ def search_keywords(dataframe, country, creds, selected_client):
             translation_column.append(translated_keyword)
             suggestion2_column.append(", ".join(suggestions) if suggestions else "N/A")
 
-        if clients_found:
-            client_column.append(", ".join(clients_found))
-        else:
-            client_column.append("N/A")
+        client_column.append(", ".join(clients_found) if clients_found else "N/A")
 
     # Check lengths of the lists
     st.write(f"Length of 'Keyword' column: {len(dataframe['Keyword'])}")
