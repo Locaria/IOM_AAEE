@@ -90,7 +90,7 @@ def search_keywords(dataframe, country, creds, selected_client):
     client_column = []
 
     language_code = country_language_mapping.get(country, 'english')  # Determine language code
-    st.write("Using language code: " + language_code)  # Debug line
+    st.write("Using language code: " + language_code)
 
     suggestions_found = False
 
@@ -130,7 +130,6 @@ def search_keywords(dataframe, country, creds, selected_client):
     dataframe['Client'] = client_column
 
     return dataframe, suggestions_found
-
 
 def get_client_list(creds):
     client = gspread.authorize(creds)
