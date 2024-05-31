@@ -113,7 +113,7 @@ def search_keywords(dataframe, country, creds, selected_client):
             found_keyword_column.append("Keyword not saved in the database yet")
             translation_column.append(translated_keyword)
             suggestion2_column.append(", ".join(suggestions) if suggestions else "N/A")
-            if suggestions:
+            if suggestions and any(suggestion != "N/A" for suggestion in suggestions):
                 suggestions_found = True
 
         client_column.append(", ".join(clients_found) if clients_found else "N/A")
@@ -130,6 +130,7 @@ def search_keywords(dataframe, country, creds, selected_client):
     dataframe['Client'] = client_column
 
     return dataframe, suggestions_found
+
 
 def get_client_list(creds):
     client = gspread.authorize(creds)
