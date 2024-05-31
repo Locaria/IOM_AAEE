@@ -6,6 +6,7 @@ import json
 from translate import Translator as Translate
 import nltk
 from nltk.corpus import wordnet
+import tempfile
 
 nltk.download('wordnet', quiet=True)
 nltk.download('omw-1.4', quiet=True)
@@ -188,6 +189,7 @@ def main():
     country = st.selectbox("Select Country", options=list(country_language_mapping.keys()))
     selected_client = st.selectbox("Select Client", options=clients)
 
+    suggestions_found = False
     if st.button("Process"):
         language_code = country_language_mapping.get(country, 'english')
 
@@ -198,30 +200,16 @@ def main():
             st.write("Keyword results:")
             st.dataframe(updated_df)
 
-            # Add download button
-            output_filepath = 'updated_keywords.xlsx'
-            updated_df.to_excel(output_filepath, index=False)
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
+                df.to_excel(tmp.name, index=False)
+                st.download_button(
+                    label="Download updated Excel file",
+                    data=tmp.name,
+                    file_name='updated_keywords.xlsx'
+                )
 
             st.success("Updated keywords have been added to the Excel file and it is ready for download.")
-            with open(output_filepath, "rb") as file:
-                st.download_button(label="Download updated Excel file", data=file, file_name=output_filepath)
-
-            # Debug print to ensure suggestions_found is correct
             st.write(f"Suggestions found: {suggestions_found}")
-
-            # Show the Google Sheet update button if suggestions are found
-            if suggestions_found:
-                if selected_client == "All Clients":
-                    client_name = st.text_input("Enter Client Name to update G-Sheet:")
-                else:
-                    client_name = selected_client
-
-                if st.button("Confirm and Add Keyword Suggestions to G-Sheet"):
-                    if selected_client == "All Clients" and not client_name:
-                        st.error("Please enter the client name.")
-                    else:
-                        update_google_sheet_with_suggestions(creds, updated_df, client_name, country)
-                        st.success("Keyword suggestions have been added to the Google Sheet.")
 
         elif word_input:
             df = pd.DataFrame({'Keyword': [word_input]})
@@ -229,30 +217,29 @@ def main():
             st.write("Keyword results:")
             st.dataframe(updated_df)
 
-            # Add download button
-            output_filepath = 'updated_keywords.xlsx'
-            updated_df.to_excel(output_filepath, index=False)
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
+                df.to_excel(tmp.name, index=False)
+                st.download_button(
+                    label="Download updated Excel file",
+                    data=tmp.name,
+                    file_name='updated_keywords.xlsx'
+                )
 
             st.success("Updated keywords have been added to the Excel file and it is ready for download.")
-            with open(output_filepath, "rb") as file:
-                st.download_button(label="Download updated Excel file", data=file, file_name=output_filepath)
-
-            # Debug print to ensure suggestions_found is correct
             st.write(f"Suggestions found: {suggestions_found}")
 
-            # Show the Google Sheet update button if suggestions are found
-            if suggestions_found:
-                if selected_client == "All Clients":
-                    client_name = st.text_input("Enter Client Name to update G-Sheet:")
-                else:
-                    client_name = selected_client
+        if suggestions_found:
+            if selected_client == "All Clients":
+                client_name = st.text_input("Enter Client Name to update G-Sheet:")
+            else:
+                client_name = selected_client
 
-                if st.button("Confirm and Add Keyword Suggestions to G-Sheet"):
-                    if selected_client == "All Clients" and not client_name:
-                        st.error("Please enter the client name.")
-                    else:
-                        update_google_sheet_with_suggestions(creds, updated_df, client_name, country)
-                        st.success("Keyword suggestions have been added to the Google Sheet.")
+            if st.button("Confirm and Add Keyword Suggestions to G-Sheet"):
+                if selected_client == "All Clients" and not client_name:
+                    st.error("Please enter the client name.")
+                else:
+                    update_google_sheet_with_suggestions(creds, updated_df, client_name, country)
+                    st.success("Keyword suggestions have been added to the Google Sheet.")
 
 if __name__ == '__main__':
     main()
