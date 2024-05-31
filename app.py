@@ -155,6 +155,17 @@ def get_client_list(creds):
     st.write(f"Debug: Retrieved clients: {clients}")  # Debug line
     return ["All Clients"] + sorted(clients)
 
+def update_google_sheet_with_suggestions(creds, updated_df, client_name, country):
+    client = gspread.authorize(creds)
+    spreadsheet_id = '1fkzvhb7al-GFajtjRRy3b93vCDdlARBmCTGDrxm0KVY'
+    spreadsheet = client.open_by_key(spreadsheet_id)
+    sheet = spreadsheet.sheet1
+
+    for index, row in updated_df.iterrows():
+        if row['Suggestion1'] != 'N/A':
+            new_row = [country, row['Suggestion1'], row['Keyword'], "", client_name]
+            sheet.append_row(new_row)
+
 def main():
     st.title('Keyword Checker and Suggestion Tool')
 
@@ -186,8 +197,11 @@ def main():
             with open(output_filepath, "rb") as file:
                 st.download_button(label="Download updated Excel file", data=file, file_name=output_filepath)
 
-            if suggestions_found and st.button("Confirm and Add Keyword Suggestions"):
-                st.write("Confirmed and keyword suggestions have been added.")
+            if suggestions_found:
+                client_name = st.text_input("Enter Client Name to update G-Sheet:")
+                if st.button("Confirm and Add Keyword Suggestions to G-Sheet"):
+                    update_google_sheet_with_suggestions(creds, updated_df, client_name, country)
+                    st.success("Keyword suggestions have been added to the Google Sheet.")
 
         elif word_input:
             df = pd.DataFrame({'Keyword': [word_input]})
@@ -203,8 +217,11 @@ def main():
             with open(output_filepath, "rb") as file:
                 st.download_button(label="Download updated Excel file", data=file, file_name=output_filepath)
 
-            if suggestions_found and st.button("Confirm and Add Keyword Suggestions"):
-                st.write("Confirmed and keyword suggestions have been added.")
+            if suggestions_found:
+                client_name = st.text_input("Enter Client Name to update G-Sheet:")
+                if st.button("Confirm and Add Keyword Suggestions to G-Sheet"):
+                    update_google_sheet_with_suggestions(creds, updated_df, client_name, country)
+                    st.success("Keyword suggestions have been added to the Google Sheet.")
 
 if __name__ == '__main__':
     main()
