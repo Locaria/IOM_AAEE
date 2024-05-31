@@ -121,6 +121,19 @@ def search_keywords(dataframe, country, creds, selected_client):
         else:
             client_column.append("N/A")
 
+    # Check lengths of the lists
+    st.write(f"Length of 'Keyword' column: {len(dataframe['Keyword'])}")
+    st.write(f"Length of 'Found Keyword' column: {len(found_keyword_column)}")
+    st.write(f"Length of 'Suggestion1' column: {len(translation_column)}")
+    st.write(f"Length of 'Suggestion2' column: {len(suggestion2_column)}")
+    st.write(f"Length of 'Client' column: {len(client_column)}")
+
+    # Ensure all lists are of the same length as the dataframe
+    assert len(found_keyword_column) == len(dataframe), "Mismatch in length of 'Found Keyword' column"
+    assert len(translation_column) == len(dataframe), "Mismatch in length of 'Suggestion1' column"
+    assert len(suggestion2_column) == len(dataframe), "Mismatch in length of 'Suggestion2' column"
+    assert len(client_column) == len(dataframe), "Mismatch in length of 'Client' column"
+
     dataframe['Found Keyword'] = found_keyword_column
     dataframe['Suggestion1'] = translation_column
     dataframe['Suggestion2'] = suggestion2_column
